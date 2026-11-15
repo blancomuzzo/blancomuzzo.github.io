@@ -6,9 +6,9 @@
 // 2. Stage (desktop): the page never scrolls. The hero is a fixed left column and
 //    the reel on the right is its own scroller. The wheel, anywhere on the page,
 //    moves the reel with easing.
-//    Home (reel with data-tilt data-snap): one title card per page. Cards tilt in
-//    perspective as they leave the middle, and when the wheel stops between two
-//    cards the reel carries on to the next one in the direction you were going.
+//    Home (reel with data-tilt data-snap): one title card per page, one card on
+//    screen at a time. Each wheel gesture or key press moves to the next or
+//    previous card; cards tilt in perspective as they leave the middle.
 //    Inner pages: the section scrolls freely.
 // 3. Scenes (GSAP ScrollTrigger), desktop, inside the reel:
 //    about     the statement lights up word by word once the page is in
@@ -156,42 +156,36 @@
     };
     const base = () => (raf ? target : reel.scrollTop);
 
-    // ---- resting points ----
-    // A card rests with its top just under the bar (where links to it land).
-    // A card taller than the screen can rest anywhere from its top to its
-    // bottom, so it can be read through. The very start and end are rests too.
-    const TOP = 0.12;          // share of the viewport above a resting card
-    const BOTTOM = 0.06;       // share below a tall card resting on its bottom
-    const SETTLE = 160;        // ms without wheel or key input before settling
-    let zones = [];
-    let dir = 1;
-    let idle;
-    const settle = () => {
-      if (!snaps || !onStage() || !zones.length) return;
-      const y = target;
-      if (zones.some(([a, b]) => y >= a - 3 && y <= b + 3)) return;
-      let to = null;
-      if (dir > 0) {
-        const next = zones.find(([a]) => a > y);
-        if (next) to = next[0];
-      } else {
-        for (let i = zones.length - 1; i >= 0; i--) if (zones[i][1] < y) { to = zones[i][1]; break; }
-      }
-      if (to !== null) go(to);
-    };
-    const nudge = (y, d) => {
-      dir = d;
-      go(y);
-      clearTimeout(idle);
-      idle = setTimeout(settle, SETTLE);
-    };
+    // ---- one card at a time (reel with data-snap) ----
+    // Each card has a stop that centres it on screen. One wheel gesture or one
+    // key press moves to the next or previous card. A gesture ends after GESTURE
+    // ms without wheel events, so a trackpad still coasting after a flick does
+    // not turn a second card.
+    const GESTURE = 220;       // ms of wheel quiet that ends a gesture
+    const NEED = 30;           // px of wheel in one gesture before it turns a card
+    let stops = [];
+    let sum = 0;
+    let spent = false;         // this gesture already turned a card
+    let quiet;
+    const nearest = y => stops.reduce((best, s, i) => (Math.abs(s - y) < Math.abs(stops[best] - y) ? i : best), 0);
+    const show = i => go(stops[clamp(i, 0, stops.length - 1)]);
+    const turn = d => show(nearest(base()) + d);
+    const paged = () => snaps && stops.length > 0;
 
     // The wheel anywhere on the page drives the reel.
     addEventListener("wheel", e => {
       if (!onStage() || e.ctrlKey || !e.deltaY) return;   // ctrl + wheel is zoom
       e.preventDefault();
       const unit = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? reel.clientHeight : 1;
-      nudge(base() + e.deltaY * unit, Math.sign(e.deltaY));
+      const dy = e.deltaY * unit;
+      if (!paged()) { go(base() + dy); return; }
+      clearTimeout(quiet);
+      quiet = setTimeout(() => { sum = 0; spent = false; }, GESTURE);
+      if (spent) return;
+      sum += dy;
+      if (Math.abs(sum) < NEED) return;
+      spent = true;
+      turn(Math.sign(sum));
     }, { passive: false });
 
     // Keys work wherever the focus is.
@@ -203,11 +197,12 @@
         ArrowDown: 90, ArrowUp: -90, PageDown: page, PageUp: -page,
         " ": e.shiftKey ? -page : page,
       };
-      if (e.key === "Home") { e.preventDefault(); go(0); return; }
-      if (e.key === "End") { e.preventDefault(); go(max()); return; }
+      if (e.key === "Home") { e.preventDefault(); paged() ? show(0) : go(0); return; }
+      if (e.key === "End") { e.preventDefault(); paged() ? show(stops.length - 1) : go(max()); return; }
       if (!(e.key in moves)) return;
       e.preventDefault();
-      nudge(base() + moves[e.key], Math.sign(moves[e.key]));
+      if (paged()) turn(Math.sign(moves[e.key]));
+      else go(base() + moves[e.key]);
     });
 
     // In-page links into the reel glide there instead of jumping. The skip link
@@ -220,8 +215,7 @@
       if (el === reel) { e.preventDefault(); reel.setAttribute("tabindex", "-1"); reel.focus({ preventScroll: true }); return; }
       if (!el || !reel.contains(el)) return;
       e.preventDefault();
-      clearTimeout(idle);
-      go(offsetIn(el) - reel.clientHeight * TOP);
+      go(offsetIn(el) - reel.clientHeight * 0.12);
       if (!el.hasAttribute("tabindex")) el.setAttribute("tabindex", "-1");
       el.focus({ preventScroll: true });
     });
@@ -242,14 +236,7 @@
     const measure = () => {
       geo = cards.map(c => ({ c, top: offsetIn(c), h: c.offsetHeight, w: c.offsetWidth }));
       const vh = reel.clientHeight;
-      const end = max();
-      zones = geo.map(g => {
-        const a = clamp(g.top - vh * TOP, 0, end);
-        const b = clamp(g.top + g.h - vh * (1 - BOTTOM), a, end);
-        return [a, b];
-      });
-      if (zones.length) zones[0][0] = 0;                 // the first card rests from the very top
-      zones.push([end, end]);                            // and the footer at the very end
+      stops = geo.map(g => clamp(Math.round(g.top + g.h / 2 - vh / 2), 0, max()));
     };
     const flatten = () => cards.forEach(c => { c.style.transform = ""; c.style.transformOrigin = ""; });
     function update() {
