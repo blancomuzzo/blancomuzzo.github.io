@@ -1,22 +1,29 @@
-// Motion for the portfolio. Everything here is off for prefers-reduced-motion,
-// and if GSAP, ScrollTrigger or Lenis fail to load the page stays readable.
+// Motion and the desktop reel. If GSAP or ScrollTrigger fail to load, or for
+// prefers-reduced-motion, the page stays readable and the reel still scrolls.
 //
 // 1. Load sequence: the axis grows while a counter climbs to 100, the name rolls in.
-// 2. Smooth scroll (Lenis) that settles on the next section when you let go.
-// 3. Scenes (GSAP ScrollTrigger), desktop:
-//    hero      the name lags and the corner words drift apart as you leave
-//    about     the statement lights up word by word as the screen scrolls in
+// 2. Stage (desktop): the page never scrolls. The hero is a fixed left column and
+//    the reel on the right is its own scroller. The wheel, anywhere on the page,
+//    moves the reel with easing; cards tilt in perspective as they leave the
+//    middle; ticks on the left name the card in view and jump to any card.
+// 3. Scenes (GSAP ScrollTrigger), desktop, inside the reel:
+//    about     the statement lights up word by word once the page has loaded
 //    stack     each line slides in from alternating sides into place
-//    projects  held on screen while the panels travel sideways behind the axis
-//    exp       the timeline is built job by job as the screen scrolls in
-//    Every screen is complete by the time it reaches the top: arriving builds it.
+//    exp       the timeline is built job by job as the card goes by
 //    certs     lines rise in sequence
 //    foot      the two corner words close in
-//    On phones the held scenes become plain reveals as each piece enters.
+//    Every other card assembles as one sequence as it arrives.
+//    On phones the page scrolls normally and pieces reveal as they enter.
 
 (() => {
   const root = document.documentElement;
   const motion = root.classList.contains("js-motion");
+
+  const DESKTOP = "(min-width: 53.01rem) and (min-height: 34rem)";   // same as the stage in styles.css
+  const MOBILE = "(max-width: 53rem), (max-height: 33.99rem)";
+  const stageQuery = matchMedia(DESKTOP);
+  const onStage = () => stageQuery.matches;
+  const reel = document.querySelector(".reel");
 
   const year = document.getElementById("year");
   if (year) year.textContent = new Date().getFullYear();
@@ -48,6 +55,20 @@
     new Promise(resolve => setTimeout(resolve, FONT_TIMEOUT)),
   ]).catch(() => {});
 
+  const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
+
+  // Distance from the top of the reel's content to an element in it. Unlike
+  // getBoundingClientRect, it ignores the cards' tilt.
+  const offsetIn = el => {
+    let y = 0;
+    while (el && el !== reel) { y += el.offsetTop; el = el.offsetParent; }
+    return y;
+  };
+
+  // Where an element's top sits on screen right now, ignoring tilt.
+  const topOf = el => (onStage() && reel ? offsetIn(el) - reel.scrollTop : el.getBoundingClientRect().top);
+
+  const stage = setupStage();
   setupNav();
   if (!motion) return;
 
@@ -60,12 +81,17 @@
   }
   gsap.registerPlugin(ScrollTrigger);
 
+  // Card tilt has to be off while ScrollTrigger measures, or the tilted boxes
+  // would shift every start and end.
+  ScrollTrigger.addEventListener("refreshInit", stage.flatten);
+  ScrollTrigger.addEventListener("refresh", stage.update);
+
   // ------------------------------------------------------------------------
   // Motion tokens: one small set, reused everywhere
   // ------------------------------------------------------------------------
   const M = {
     ease: { out: "power3.out", mask: "power4.out", move: "power2.inOut" },
-    dur: { reveal: 0.9, lines: 1.05, rule: 1.1, snap: 0.95 },
+    dur: { reveal: 0.9, lines: 1.05, rule: 1.1 },
     stagger: { lines: 0.1, items: 0.08, words: 0.12 },
     offset: 24,            // px a fading block rises
     scrub: 1,              // s the scrubbed scenes trail the scroll
@@ -74,14 +100,6 @@
   };
   gsap.defaults({ ease: M.ease.out, duration: M.dur.reveal });
 
-  const DESKTOP = "(min-width: 53.01rem) and (min-height: 34rem)";
-  const MOBILE = "(max-width: 53rem), (max-height: 33.99rem)";
-
-  const lenis = setupLenis();
-  let zones = [];          // scroll ranges where a whole section is on screen
-  let sceneZones = [];     // functions held scenes register to report theirs
-
-  introDone.then(heroScene);
   fontsReady.then(() => {
     if (!root.classList.contains("js-motion")) return;  // failsafe already gave up
     init();
@@ -99,88 +117,124 @@
   });
 
   // ------------------------------------------------------------------------
-  // Smooth scroll, and settling on a section when the scroll stops
+  // Stage: the reel's scrolling, the cards' tilt
   // ------------------------------------------------------------------------
-  function setupLenis() {
-    if (!window.Lenis) return null;
-    const lenis = new window.Lenis({ lerp: 0.09, smoothWheel: true, wheelMultiplier: 0.9, anchors: true });
-    lenis.on("scroll", ScrollTrigger.update);
-    gsap.ticker.add(time => lenis.raf(time * 1000));
-    gsap.ticker.lagSmoothing(0);
+  function setupStage() {
+    const none = { flatten() {}, update() {} };
+    if (!reel) return none;
 
-    lenis.stop();                       // no scrolling during the load sequence
-    introDone.then(() => {
-      lenis.start();
-      ScrollTrigger.refresh();
-    });
+    const smooth = motion;
+    const cards = [...reel.querySelectorAll(".screen")];
+    const EASE = 0.1;          // share of the remaining distance covered per frame
+    const TILT = 16;           // deg a card turns at full tilt
+    const FLAT = 0.12;         // within this share of the viewport from the middle, cards stay flat
+    const RAMP = 0.5;          // share of the viewport over which the tilt builds up
+    const DEPTH = 1.6;         // perspective distance, in card widths
 
-    // When the scroll comes to rest between two sections, finish the trip to the
-    // next one in the direction you were going. Inside a held scene any resting
-    // point is fine: the whole screen is one section.
-    const IDLE = 180;
-    const ease = t => (t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2);
-    let idle;
-    let dir = 1;
-    let snapping = false;
+    let target = 0;
+    let current = 0;
+    let raf = 0;
+    let own = -1;              // the scrollTop this script last set
+    const max = () => reel.scrollHeight - reel.clientHeight;
 
-    const settle = () => {
-      if (snapping || !matchMedia(DESKTOP).matches || !zones.length) return;
-      const y = lenis.scroll;
-      if (zones.some(([a, b]) => y >= a - 3 && y <= b + 3)) return;
-      let target = null;
-      if (dir > 0) {
-        const next = zones.find(([a]) => a > y);
-        if (next) target = next[0];
-      } else {
-        for (let i = zones.length - 1; i >= 0; i--) {
-          if (zones[i][1] < y) { target = zones[i][1]; break; }
-        }
-      }
-      if (target === null) return;
-      snapping = true;
-      const release = () => { snapping = false; };
-      lenis.scrollTo(target, { duration: M.dur.snap, easing: ease, lock: true, onComplete: release });
-      setTimeout(release, M.dur.snap * 1000 + 400);
+    const step = () => {
+      raf = 0;
+      current += (target - current) * EASE;
+      if (Math.abs(target - current) < 0.5) current = target;
+      reel.scrollTop = current;
+      own = reel.scrollTop;
+      if (current !== target) raf = requestAnimationFrame(step);
     };
+    const go = y => {
+      const from = raf ? current : reel.scrollTop;
+      target = clamp(y, 0, max());
+      if (!smooth) { reel.scrollTop = target; return; }
+      current = from;
+      if (!raf) raf = requestAnimationFrame(step);
+    };
+    const base = () => (raf ? target : reel.scrollTop);
 
-    // Wheel and trackpad scrolls go through Lenis's smoothing: settle as soon as
-    // it has nearly stopped, without waiting out its long, almost still tail.
-    // Native scrolls (scrollbar, keys) settle after a pause instead, so a
-    // scrollbar drag is never fought mid-gesture.
-    const SLOW = 2.5;          // px per frame
-    const HANDS_OFF = 90;      // ms since the last wheel event: the gesture is over
-    const NATIVE_IDLE = 400;   // ms
-    let lastWheel = 0;
-    addEventListener("wheel", () => { lastWheel = performance.now(); }, { passive: true });
-    lenis.on("scroll", l => {
-      if (l.direction) dir = l.direction;
-      if (snapping) return;
-      clearTimeout(idle);
-      const handsOff = performance.now() - lastWheel > HANDS_OFF;
-      if (l.isScrolling === "smooth" && handsOff && Math.abs(l.velocity) < SLOW) settle();
-      else idle = setTimeout(settle, l.isScrolling === "smooth" ? IDLE : NATIVE_IDLE);
+    // The wheel anywhere on the page drives the reel.
+    addEventListener("wheel", e => {
+      if (!onStage() || e.ctrlKey || !e.deltaY) return;   // ctrl + wheel is zoom
+      e.preventDefault();
+      const unit = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? reel.clientHeight : 1;
+      go(base() + e.deltaY * unit);
+    }, { passive: false });
+
+    // Keys work wherever the focus is.
+    addEventListener("keydown", e => {
+      if (!onStage() || e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey) return;
+      if (e.target.closest && e.target.closest("input, textarea, select, [contenteditable]")) return;
+      const page = reel.clientHeight * 0.85;
+      const moves = {
+        ArrowDown: 90, ArrowUp: -90, PageDown: page, PageUp: -page,
+        " ": e.shiftKey ? -page : page,
+      };
+      if (e.key === "Home") { e.preventDefault(); go(0); return; }
+      if (e.key === "End") { e.preventDefault(); go(max()); return; }
+      if (!(e.key in moves)) return;
+      e.preventDefault();
+      go(base() + moves[e.key]);
     });
 
-    ScrollTrigger.addEventListener("refresh", computeZones);
-    return lenis;
-  }
-
-  function computeZones() {
-    const vh = innerHeight;
-    const max = ScrollTrigger.maxScroll(window);
-    const held = new Set();
-    const out = [[0, 0]];
-    sceneZones.forEach(fn => fn(out, held));
-    document.querySelectorAll(".screen:not(.panel)").forEach(el => {
-      if (held.has(el)) return;
-      const top = el.getBoundingClientRect().top + scrollY;
-      out.push([top, top + Math.max(0, el.offsetHeight - vh)]);
+    // Links to a card glide there instead of jumping. "#top" goes back to the start.
+    document.addEventListener("click", e => {
+      const a = e.target.closest && e.target.closest('a[href^="#"]');
+      if (!a || !onStage()) return;
+      const id = a.getAttribute("href").slice(1);
+      if (id === "top") { e.preventDefault(); go(0); return; }
+      const el = id && document.getElementById(id);
+      if (!el || !reel.contains(el)) return;
+      e.preventDefault();
+      go(offsetIn(el) - reel.clientHeight * 0.12);
+      if (!el.hasAttribute("tabindex")) el.setAttribute("tabindex", "-1");
+      el.focus({ preventScroll: true });
     });
-    out.push([max, max]);
-    zones = out
-      .map(([a, b]) => [Math.min(Math.round(a), max), Math.min(Math.round(b), max)])
-      .sort((p, q) => p[0] - q[0]);
-    root.dataset.zones = JSON.stringify(zones);   // inspectable in devtools
+
+    // Scrolls this script did not make (focus moving with Tab, find in page,
+    // the scrollbar on touch screens) become the new resting point.
+    let queued = false;
+    reel.addEventListener("scroll", () => {
+      if (!raf && Math.abs(reel.scrollTop - own) > 1) target = current = reel.scrollTop;
+      if (!queued) { queued = true; requestAnimationFrame(update); }
+    }, { passive: true });
+
+    // ---- tilt ----
+    // A card is flat while it holds the middle of the screen. Leaving, it turns
+    // on its vertical axis, seen from the middle of the screen: above the middle
+    // its top edge flares out, below it the bottom edge does.
+    let geo = [];
+    const measure = () => {
+      geo = cards.map(c => ({ c, top: offsetIn(c), h: c.offsetHeight, w: c.offsetWidth }));
+    };
+    const flatten = () => cards.forEach(c => { c.style.transform = ""; c.style.transformOrigin = ""; });
+    function update() {
+      queued = false;
+      if (!smooth || !onStage()) { flatten(); return; }
+      if (!geo.length) measure();
+      const vh = reel.clientHeight;
+      const mid = vh / 2;
+      const s = reel.scrollTop;
+      for (const g of geo) {
+        const top = g.top - s;
+        if (top > vh || top + g.h < 0) continue;            // off screen
+        const m = Math.min(g.h / 2, vh * 0.3);              // tall cards stay flat longer
+        const near = clamp(mid, top + m, top + g.h - m);
+        const k = clamp((Math.abs(near - mid) / vh - FLAT) / RAMP, 0, 1);
+        if (!k) { g.c.style.transform = ""; g.c.style.transformOrigin = ""; continue; }
+        const eased = k * k * (3 - 2 * k);
+        g.c.style.transformOrigin = `50% ${(mid - top).toFixed(1)}px`;
+        g.c.style.transform = `perspective(${Math.round(g.w * DEPTH)}px) rotateY(${(-TILT * eased).toFixed(2)}deg)`;
+      }
+    }
+
+    const relayout = () => { measure(); update(); };
+    if (window.ResizeObserver) new ResizeObserver(relayout).observe(reel.querySelector(".spine") || reel);
+    stageQuery.addEventListener("change", relayout);
+    fontsReady.then(relayout);
+
+    return { flatten, update: relayout };
   }
 
   // ------------------------------------------------------------------------
@@ -294,6 +348,7 @@
   let mm;
 
   function init() {
+    stage.flatten();   // split lines on the cards' real, untilted width
     document.querySelectorAll("[data-lines]").forEach(splitLines);
     document.querySelectorAll("[data-words]").forEach(splitWords);
 
@@ -301,23 +356,19 @@
     mm.add({ desktop: DESKTOP, mobile: MOBILE }, ctx => {
       const desktop = ctx.conditions.desktop;
       const handled = new Set();
-      const cleanups = [];
-      sceneZones = [];
+      ScrollTrigger.defaults({ scroller: desktop && reel ? reel : window });
 
       if (desktop) {
-        aboutScene(handled);
+        aboutScene(handled, true);
         stackScene(handled);
-        cleanups.push(projectsScene(handled));
         expScene(handled);
+      } else {
+        aboutScene(handled, false);
+        introDone.then(() => ctx.add(heroScene));
       }
       certsScene(handled);
       footScene();
       reveals(handled, desktop);
-
-      return () => {
-        cleanups.forEach(fn => fn && fn());
-        sceneZones = [];
-      };
     });
 
     root.classList.add("motion-on");
@@ -325,7 +376,6 @@
   }
 
   const lines = scope => scope.querySelectorAll(".ln-in");
-  const mark = (handled, scope, sel) => scope.querySelectorAll(sel).forEach(el => handled.add(el));
 
   // Words light up through the accent: the edge of what has been read glows blue.
   const color = name => getComputedStyle(root).getPropertyValue(name).trim();
@@ -342,7 +392,7 @@
     ...extra,
   });
 
-  // Leaving the hero: the name lags behind the scroll, the corner words part.
+  // Phones: leaving the hero, the name lags behind the scroll, the corner words part.
   function heroScene() {
     const hero = document.querySelector(".hero");
     if (!hero) return;
@@ -353,15 +403,31 @@
       .to(hero.querySelectorAll(".meta, .role"), { autoAlpha: 0, ease: "none", duration: 0.4 }, 0);
   }
 
-  // About: the statement lights up word by word while the screen scrolls in,
-  // then the two paragraphs arrive. All done as the screen reaches the top.
-  function aboutScene(handled) {
+  // About: the statement lights up word by word, then the paragraph arrives.
+  // Desktop: About is the first card, on screen from the start, so it plays once
+  // the hero has landed. Phones: it follows the scroll.
+  function aboutScene(handled, desktop) {
     const sec = document.querySelector('[data-scene="about"]');
     if (!sec) return;
     const lead = sec.querySelector("[data-words]");
     const fades = sec.querySelectorAll("[data-fade]");
+    const side = sec.querySelector("[data-side]");
     handled.add(lead);
     fades.forEach(el => handled.add(el));
+
+    if (desktop) {
+      handled.add(side);
+      const words = lead.querySelectorAll(".w");
+      gsap.set(side, { xPercent: 105 });                 // starting states now, so
+      gsap.set(words, wordsFrom());                      // nothing shows lit before
+      gsap.set(fades, { autoAlpha: 0, y: M.offset });    // the sequence runs
+      const tl = gsap.timeline({ paused: true })
+        .to(side, { xPercent: 0, duration: 0.8 }, 0)
+        .to(words, wordsTo({ duration: 1.1, stagger: 0.07 }), 0.1)
+        .to(fades, { autoAlpha: 1, y: 0, stagger: 0.1 }, ">-0.5");
+      introDone.then(() => tl.play());
+      return;
+    }
 
     gsap.timeline({ scrollTrigger: { trigger: sec, start: "top 85%", end: "top top", scrub: M.scrub } })
       .set(lead.querySelectorAll(".w"), wordsFrom(), 0)
@@ -378,126 +444,18 @@
     gsap.fromTo(lines(text),
       { xPercent: i => (i % 2 ? -55 : 55), opacity: 0.12 },
       { xPercent: 0, opacity: 1, ease: "none", stagger: 0.06,
-        scrollTrigger: { trigger: sec, start: "top 95%", end: "top 15%", scrub: M.scrub } });
+        scrollTrigger: { trigger: sec, start: "top 95%", end: "top 25%", scrub: M.scrub } });
   }
 
-  // Projects: the section holds; each panel slides in from the right and the
-  // last one leaves behind the axis. Labels on the left swap, a bar tracks progress.
-  function projectsScene(handled) {
-    const sec = document.querySelector('[data-scene="projects"]');
-    if (!sec) return null;
-    const track = sec.querySelector(".hscene-track");
-    const panels = [...sec.querySelectorAll(".panel")];
-    panels.forEach(p => mark(handled, p, "[data-lines], [data-fade], [data-side]"));
-    sec.classList.add("is-h");
-
-    const labels = document.createElement("div");
-    labels.className = "hscene-labels";
-    labels.setAttribute("aria-hidden", "true");
-    panels.forEach(p => {
-      const outer = document.createElement("span");
-      const inner = document.createElement("span");
-      inner.innerHTML = p.querySelector(".label [data-side]").innerHTML;
-      outer.append(inner);
-      labels.append(outer);
-    });
-    const bar = document.createElement("div");
-    bar.className = "hscene-bar";
-    bar.setAttribute("aria-hidden", "true");
-    const fill = document.createElement("span");
-    bar.append(fill);
-    sec.append(labels, bar);
-
-    let active = -1;
-    const setActive = i => {
-      if (i === active) return;
-      active = i;
-      [...labels.children].forEach((el, j) => {
-        el.classList.toggle("is-on", j === i);
-        el.classList.toggle("is-past", j < i);
-      });
-    };
-
-    // The first panel is revealed as the section arrives.
-    const first = panels[0];
-    gsap.timeline({ scrollTrigger: { trigger: sec, start: "top 70%", once: true, onEnter: () => setActive(Math.max(active, 0)) } })
-      .fromTo(lines(first), { yPercent: 115 }, { yPercent: 0, duration: M.dur.lines, ease: M.ease.mask, stagger: M.stagger.lines })
-      .fromTo(first.querySelectorAll("[data-fade]"), { autoAlpha: 0, y: M.offset }, { autoAlpha: 1, y: 0, stagger: M.stagger.items }, 0.3);
-
-    // One timeline: a rest on each panel (DWELL), a move between them (MOVE).
-    const START = 0.5, MOVE = 1, DWELL = 0.5;
-    const REST = 0.2;   // where each panel rests, past the end of its move, once its details are in
-    const moves = [];
-    const tl = gsap.timeline({ defaults: { ease: "none" } });
-    tl.to({}, { duration: START });
-    panels.slice(1).forEach((panel, k) => {
-      const at = tl.duration();
-      moves.push(at);
-      tl.to(track, { xPercent: -100 * (k + 1), duration: MOVE, ease: M.ease.move }, at)
-        .fromTo(lines(panel), { yPercent: 115 }, { yPercent: 0, duration: 0.55, stagger: 0.08, ease: M.ease.out }, at + 0.35)
-        .fromTo(panel.querySelectorAll("[data-fade]"), { autoAlpha: 0, y: M.offset },
-          { autoAlpha: 1, y: 0, duration: 0.45, stagger: 0.05, ease: M.ease.out }, at + 0.55)
-        .to({}, { duration: DWELL }, at + MOVE);
-    });
-    const total = tl.duration();
-    tl.fromTo(fill, { scaleX: 0 }, { scaleX: 1, duration: total }, 0);
-
-    // The label flips a little before the halfway point, as the new title lands.
-    const indexAt = t => moves.filter(m => t >= m + MOVE * 0.39).length;
-
-    const st = ScrollTrigger.create({
-      trigger: sec,
-      start: "top top",
-      end: () => "+=" + innerHeight * total * 0.85,
-      pin: true,
-      scrub: M.scrub,
-      anticipatePin: 1,
-      invalidateOnRefresh: true,
-      animation: tl,
-    });
-    // Follow the timeline itself, not the scroll: with scrub the picture trails
-    // the scroll, and the label has to match the picture.
-    tl.eventCallback("onUpdate", () => { if (tl.time() > 0) setActive(indexAt(tl.time())); });
-
-    // Resting points: one per panel, so any small scroll from a panel carries on
-    // to the next one instead of idling through scroll where nothing moves.
-    const at = t => st.start + (t / total) * (st.end - st.start);
-    const rests = [0, ...moves.map(m => m + MOVE + REST)];
-    sceneZones.push((out, held) => {
-      held.add(sec);
-      rests.forEach(t => out.push([at(t), at(t)]));
-    });
-
-    // Index links glide to their panel instead of jumping to the section top.
-    const onClick = e => {
-      const link = e.target.closest("[data-panel]");
-      if (!link) return;
-      e.preventDefault();
-      e.stopPropagation();   // capture phase: Lenis's own anchor handling never sees it
-      const i = +link.dataset.panel;
-      const y = at(rests[i]);
-      if (lenis) lenis.scrollTo(y, { duration: 1.6 });
-      else window.scrollTo({ top: y, behavior: "smooth" });
-    };
-    sec.addEventListener("click", onClick, true);
-
-    return () => {
-      sec.removeEventListener("click", onClick, true);
-      sec.classList.remove("is-h");
-      labels.remove();
-      bar.remove();
-    };
-  }
-
-  // Experience: each job is drawn while the screen scrolls in: branch, node,
-  // years, name, then the details. Complete as the screen reaches the top.
+  // Experience: each job is drawn as the card goes by: branch, node, years,
+  // name, then the details. The last job is in before the card's end arrives.
   function expScene(handled) {
     const sec = document.querySelector('[data-scene="exp"]');
     if (!sec) return;
     const jobs = [...sec.querySelectorAll(".job")];
-    jobs.forEach(job => mark(handled, job, "[data-rule], [data-node], [data-side], [data-lines], [data-fade]"));
+    jobs.forEach(job => job.querySelectorAll("[data-rule], [data-node], [data-side], [data-lines], [data-fade]").forEach(el => handled.add(el)));
 
-    const tl = gsap.timeline({ scrollTrigger: { trigger: sec, start: "top 70%", end: "top top", scrub: M.scrub } });
+    const tl = gsap.timeline({ scrollTrigger: { trigger: sec, start: "top 70%", end: "bottom 95%", scrub: M.scrub } });
     jobs.forEach((job, i) => {
       const at = i * 0.55;
       tl.fromTo(job.querySelector("[data-rule]"), { scaleX: 0 }, { scaleX: 1, duration: 0.7, ease: "power2.out" }, at)
@@ -512,12 +470,12 @@
   function certsScene(handled) {
     const list = document.querySelector('[data-scene="certs"] .certs');
     if (!list) return;
-    mark(handled, list, "[data-lines]");
+    list.querySelectorAll("[data-lines]").forEach(el => handled.add(el));
     gsap.fromTo(lines(list), { yPercent: 115 },
       { yPercent: 0, duration: M.dur.lines, ease: M.ease.mask, stagger: 0.07, scrollTrigger: { trigger: list, start: M.start, once: true } });
   }
 
-  // Footer: the two words close in as the page ends.
+  // Footer: the two words close in as the end arrives.
   function footScene() {
     const foot = document.querySelector('[data-scene="foot"]');
     if (!foot) return;
@@ -528,9 +486,9 @@
   }
 
   // Everything no scene took over.
-  // Desktop: each screen assembles as one sequence, in reading order, started
-  // by the screen arriving, so nothing waits for its own spot to scroll into view.
-  // Phones: screens are taller than the viewport, so each piece waits for itself.
+  // Desktop: each card assembles as one sequence, in reading order, started by
+  // the card arriving, so nothing waits for its own spot to scroll into view.
+  // Phones: sections are taller than the viewport, so each piece waits for itself.
   function reveals(handled, desktop) {
     const free = sel => gsap.utils.toArray(sel).filter(el => !handled.has(el));
 
@@ -540,7 +498,7 @@
       gsap.set(words, wordsFrom());
       gsap.to(words, wordsTo({
         scrollTrigger: screen
-          ? { trigger: screen, start: "top 85%", end: "top top", scrub: M.scrub }
+          ? { trigger: screen, start: "top 85%", end: "top 35%", scrub: M.scrub }
           : { trigger: el, start: "top 88%", end: "bottom 45%", scrub: M.scrub },
       }));
     });
@@ -555,7 +513,7 @@
         screens.get(screen).push(el);
       });
       screens.forEach((els, screen) => {
-        const tl = gsap.timeline({ scrollTrigger: { trigger: screen, start: "top 65%", once: true } });
+        const tl = gsap.timeline({ scrollTrigger: { trigger: screen, start: "top 80%", once: true } });
         els.forEach((el, i) => {
           const [targets, from, to] = motionFor(el, true);
           tl.fromTo(targets, from, to, i * M.stagger.items);
@@ -642,33 +600,54 @@
   }
 
   // ------------------------------------------------------------------------
-  // Nav: underline the section on screen
+  // Nav and ticks: mark the section in view
   // ------------------------------------------------------------------------
   function setupNav() {
-    const links = [...document.querySelectorAll(".nav a")];
-    const screens = [...document.querySelectorAll("[data-nav]")];
-    let current;
+    const groups = [
+      { links: [...document.querySelectorAll(".nav a")], current: "aria-current" },
+      { links: [...document.querySelectorAll(".ticks a")], current: "class" },
+    ].map(g => ({ ...g, targets: g.links.map(a => document.getElementById(a.getAttribute("href").slice(1))) }));
+    const navScreens = [...document.querySelectorAll("[data-nav]")];
     let queued = false;
+
+    const atEnd = () => (onStage() && reel
+      ? reel.scrollTop >= reel.scrollHeight - reel.clientHeight - 2
+      : scrollY >= document.documentElement.scrollHeight - innerHeight - 2);
+
+    const mark = (g, on) => g.links.forEach(a => {
+      const yes = a === on;
+      if (g.current === "class") a.classList.toggle("is-on", yes);
+      else if (yes) a.setAttribute("aria-current", "location");
+      else a.removeAttribute("aria-current");
+    });
 
     const update = () => {
       queued = false;
       root.classList.toggle("scrolled", scrollY > 40);
       const mid = innerHeight * 0.5;
+      const end = atEnd();
+
+      // The top nav covers groups of screens, named by data-nav.
       let id = null;
-      for (const s of screens) if (s.getBoundingClientRect().top <= mid) id = s.dataset.nav;
-      if (id === current) return;
-      current = id;
-      links.forEach(a => {
-        if (a.getAttribute("href") === "#" + id) a.setAttribute("aria-current", "location");
-        else a.removeAttribute("aria-current");
-      });
+      for (const s of navScreens) if (topOf(s) <= mid) id = s.dataset.nav;
+      if (end && navScreens.length) id = navScreens[navScreens.length - 1].dataset.nav;
+      mark(groups[0], groups[0].links.find(a => a.getAttribute("href") === "#" + id));
+
+      // The ticks follow single cards.
+      const t = groups[1];
+      let on = t.links[0];
+      t.targets.forEach((el, i) => { if (el && topOf(el) <= mid) on = t.links[i]; });
+      if (end && t.links.length) on = t.links[t.links.length - 1];
+      mark(t, on);
     };
 
-    addEventListener("scroll", () => {
+    const queue = () => {
       if (queued) return;
       queued = true;
       requestAnimationFrame(update);
-    }, { passive: true });
+    };
+    document.addEventListener("scroll", queue, { passive: true, capture: true });
+    addEventListener("resize", queue);
     update();
   }
 })();

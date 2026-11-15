@@ -35,11 +35,10 @@
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="styles.css">
 
-  <!-- Motion: GSAP + ScrollTrigger for the scenes, Lenis for smooth scrolling.
-       If any of them fails to load, the page stays fully readable without motion. -->
+  <!-- Motion: GSAP + ScrollTrigger for the scenes. If they fail to load, the page
+       stays fully readable without motion. -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
-  <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.20/dist/lenis.min.js" defer></script>
   <script src="script/script.js" defer></script>
 </head>
 <body>
@@ -57,12 +56,25 @@
 
   <main id="top">
 
-    <!-- HERO: played once by the load sequence, then drifts apart as you scroll away -->
+    <!-- HERO: played once by the load sequence. On desktop it stays put as the left
+         column while the reel on the right scrolls; on phones it scrolls away. -->
     <section class="hero" aria-label="Introduction">
       <span class="axis" aria-hidden="true"></span>
 
       <p class="meta fade" style="--d: 120">Based in Argentina</p>
-      <p class="role fade" style="--d: 320">Senior<br>Salesforce Developer</p>
+      <p class="role fade" style="--d: 320">Senior <br>Salesforce Developer</p>
+
+      <!-- Desktop only: one tick per card in the reel; the current one is named. -->
+      <nav class="ticks fade" style="--d: 420" aria-label="Sections in the reel">
+        <ol>
+          <li><a href="#about"><span class="tick" aria-hidden="true"></span><span class="tick-name">About</span></a></li>
+          <li><a href="#skills"><span class="tick" aria-hidden="true"></span><span class="tick-name">Works with</span></a></li>
+          <li><a href="#projects"><span class="tick" aria-hidden="true"></span><span class="tick-name">Projects</span></a></li>
+          <li><a href="#experience"><span class="tick" aria-hidden="true"></span><span class="tick-name">Experience</span></a></li>
+          <li><a href="#certifications"><span class="tick" aria-hidden="true"></span><span class="tick-name">Certifications</span></a></li>
+          <li><a href="#contact"><span class="tick" aria-hidden="true"></span><span class="tick-name">Contact</span></a></li>
+        </ol>
+      </nav>
 
       <h1 class="name">
         <span class="row">
@@ -85,7 +97,9 @@
          data-fade   a block that fades and rises in
          data-side   a label that slides out from behind the axis
          data-rule   a rule drawn out from the axis
-         data-node   a node on the axis -->
+         data-node   a node on the axis
+         On desktop the reel is its own scroller and every .screen in it is a card. -->
+    <div class="reel" id="reel">
     <div class="spine">
 
       <!-- ABOUT -->
@@ -99,42 +113,26 @@
         </div>
       </section>
 
-      <section class="screen" data-scene="stack" data-nav="about" aria-labelledby="h-stack">
+      <section class="screen" id="skills" data-scene="stack" data-nav="about" aria-labelledby="h-stack">
         <h3 class="label" id="h-stack"><span data-side>Works with</span></h3>
         <div class="body">
           <p class="stack" data-lines><span class="skill">Apex</span>, <span class="skill">Lightning Web Components</span>, <span class="skill">SOQL</span>, <span class="skill">Async Apex</span>, <span class="skill">REST APIs</span>, <span class="skill">SOAP APIs</span>, <span class="skill">OAuth 2.0</span>, <span class="skill">Platform Events</span>, <span class="skill">AWS S3</span>, <span class="skill">Omni-Channel</span>, <span class="skill">Data modeling</span>, <span class="skill">CI/CD</span>.</p>
         </div>
       </section>
 
-      <!-- PROJECTS: on desktop the panels travel sideways behind the axis -->
-      <section class="hscene" id="projects" data-scene="projects" data-nav="projects" aria-labelledby="h-projects">
-        <div class="hscene-window">
-          <div class="hscene-track">
-
-            <div class="screen panel">
-              <h2 class="label" id="h-projects"><span data-side>Projects</span></h2>
-              <div class="body">
-                <p class="lead" data-lines>Things I build.</p>
-                <ol class="index">
-                  <li data-fade><a href="#p-flex" data-panel="1"><span>Flex Queue Dispatcher</span><span class="index-state"><span class="dot" aria-hidden="true"></span>In progress</span></a></li>
-                </ol>
-              </div>
-            </div>
-
-            <article class="screen panel project" id="p-flex" aria-labelledby="h-flex">
-              <p class="label"><span data-side><span class="dot" aria-hidden="true"></span>In progress</span></p>
-              <div class="body">
-                <header>
-                  <h3 class="mega" id="h-flex" data-lines>Flex Queue Dispatcher</h3>
-                  <p class="sub" data-fade>Apex, async</p>
-                </header>
-                <div class="p-text">
-                  <p data-fade>An async job dispatcher for orgs that outgrow the Apex flex queue.</p>
-                </div>
-              </div>
-            </article>
-
-          </div>
+      <!-- PROJECTS -->
+      <section class="screen" id="projects" data-nav="projects" aria-labelledby="h-projects">
+        <h2 class="label" id="h-projects"><span data-side>Projects</span></h2>
+        <div class="body">
+          <p class="lead" data-lines>Things I build.</p>
+          <article class="project" id="p-flex" aria-labelledby="h-flex">
+            <header>
+              <p class="status" data-fade><span class="dot" aria-hidden="true"></span>In progress</p>
+              <h3 class="mega" id="h-flex" data-lines>Flex Queue Dispatcher</h3>
+              <p class="sub" data-fade>Apex, async</p>
+            </header>
+            <p class="p-text" data-fade>An async job dispatcher for orgs that outgrow the Apex flex queue.</p>
+          </article>
         </div>
       </section>
 
@@ -209,7 +207,7 @@
           </div>
         </div>
 
-        <div class="screen certs-screen" data-scene="certs" data-nav="experience">
+        <div class="screen certs-screen" id="certifications" data-scene="certs" data-nav="experience">
           <h3 class="label"><span data-side>Certifications</span></h3>
           <div class="body">
             <ul class="certs">
@@ -268,13 +266,14 @@
       </section>
 
     </div>
-  </main>
 
-  <footer class="foot" data-scene="foot">
-    <p class="foot-note" data-fade>© <span id="year">2026</span> Nicolás Blanco Muzzolon</p>
-    <p class="foot-note foot-note-r" data-fade>Built by hand in Argentina. Hosted on GitHub Pages.</p>
-    <p class="foot-word" aria-hidden="true">blanco</p>
-    <p class="foot-word foot-word-r" aria-hidden="true">muzzo</p>
-  </footer>
+    <footer class="foot" data-scene="foot">
+      <p class="foot-note" data-fade>© <span id="year">2026</span> Nicolás Blanco Muzzolon</p>
+      <p class="foot-note foot-note-r" data-fade>Built by hand in Argentina. Hosted on GitHub Pages.</p>
+      <p class="foot-word" aria-hidden="true">blanco</p>
+      <p class="foot-word foot-word-r" aria-hidden="true">muzzo</p>
+    </footer>
+    </div>
+  </main>
 </body>
 </html>

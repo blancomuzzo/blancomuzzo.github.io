@@ -68,11 +68,6 @@ html {
   background: var(--paper);
 }
 
-/* Lenis drives the scroll when it is running. */
-html.lenis, html.lenis body { height: auto; }
-.lenis.lenis-smooth { scroll-behavior: auto !important; }
-.lenis.lenis-stopped { overflow: hidden; }
-
 body {
   margin: 0;
   overflow-x: clip;
@@ -390,131 +385,19 @@ a { color: inherit; text-decoration: none; }
 }
 
 /* ---------- projects ---------- */
-.index { max-width: 44rem; }
-.index a {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 0.85rem 0;
-  border-top: 1px solid var(--rule);
-  font-size: clamp(1.125rem, 1.6vw, 1.5rem);
-  transition: padding-left 0.4s var(--ease), box-shadow 0.4s var(--ease);
-}
-.index li:last-child a { border-bottom: 1px solid var(--rule); }
-.index a:hover,
-.index a:focus-visible {
-  padding-left: 0.75rem;
-  box-shadow: inset 3px 0 0 var(--accent);
-}
-.index-state {
-  color: var(--mute);
+.status {
+  margin-bottom: 0.75rem;
   font-size: var(--small);
-  letter-spacing: -0.01em;
-  white-space: nowrap;
+  line-height: 1.3;
 }
-
 .mega {
   font-size: var(--mega);
   line-height: 0.9;
 }
 .project .sub { margin-top: 1rem; }
-
 .p-text {
-  display: grid;
-  grid-template-columns: minmax(0, 30rem) minmax(0, 22rem);
-  gap: 1rem clamp(1.5rem, 3vw, 3rem);
-  align-items: start;
-}
-
-.points li {
-  position: relative;
-  padding-left: 1.25em;
-}
-.points li::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 0.75em;
-  width: 0.6em;
-  height: 1px;
-  background: currentColor;
-}
-
-/* Horizontal scene (desktop, set by script.js): the section holds the screen
-   while its panels travel right to left and disappear behind the axis. */
-.hscene.is-h {
-  position: relative;
-  height: 100vh;
-  height: 100svh;
-  overflow: hidden;
-}
-.hscene.is-h .hscene-window {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: calc(var(--axis) + 1px);
-  right: 0;
-  overflow: hidden;
-}
-.hscene.is-h .hscene-track {
-  display: flex;
-  height: 100%;
-  will-change: transform;
-}
-.hscene.is-h .panel {
-  flex: 0 0 100%;
-  display: flex;
-  min-height: 0;
-  height: 100%;
-  padding: var(--screen-top) var(--pad) var(--screen-bottom) 0;
-}
-.hscene.is-h .panel > .label { display: none; }
-.hscene.is-h .panel > .body {
-  flex: 1;
-  padding-left: calc(var(--gap) - 1px);
-}
-
-/* The labels column stays put and swaps its label as each panel arrives. */
-.hscene-labels {
-  position: absolute;
-  top: var(--screen-top);
-  left: var(--pad);
-  width: var(--left);
-  font-size: var(--small);
-  font-weight: 400;
-  line-height: 1.25;
-  letter-spacing: -0.01em;
-}
-.hscene-labels > span {
-  position: absolute;
-  right: var(--gap);
-  overflow: hidden;
-  white-space: nowrap;
-}
-.hscene-labels > span > span {
-  display: block;
-  transform: translateY(110%);
-  transition: transform 0.6s var(--ease);
-}
-.hscene-labels > span.is-on > span { transform: none; }
-.hscene-labels > span.is-past > span { transform: translateY(-110%); }
-
-/* Progress through the projects, drawn along the bottom of the window. */
-.hscene-bar {
-  position: absolute;
-  left: calc(var(--axis) + var(--gap));
-  right: var(--pad);
-  bottom: 1.5rem;
-  height: 1px;
-  background: var(--rule);
-}
-.hscene-bar > span {
-  position: absolute;
-  inset: -1px 0;
-  background: var(--accent);
-  transform: scaleX(0);
-  transform-origin: left;
+  max-width: 30rem;
+  margin-top: clamp(1.5rem, 4vh, 2.5rem);
 }
 
 /* ---------- experience ---------- */
@@ -650,14 +533,161 @@ a { color: inherit; text-decoration: none; }
   letter-spacing: -0.01em;
 }
 
+/* The reel's section ticks only exist on desktop (see the stage below). */
+.ticks { display: none; }
+
 /* ---------- medium ---------- */
 @media (max-width: 68rem) {
   .prose,
-  .p-text,
   .job { grid-template-columns: minmax(0, 1fr); }
   .prose p,
-  .p-text p,
   .job-text { max-width: 34rem; }
+}
+
+/* ==========================================================================
+   Stage (desktop): the page itself never scrolls. The hero is a fixed left
+   column; on the right, the reel is its own scroller and each .screen in it
+   is a card. script.js smooths the wheel from anywhere on the page into the
+   reel and tilts the cards as they move away from the middle.
+   Same media query as DESKTOP in script.js.
+   ========================================================================== */
+@media (min-width: 53.01rem) and (min-height: 34rem) {
+  :root {
+    --left: min(34vw, 34rem);
+    --display: calc(var(--left) / 5.4);
+  }
+  html,
+  body {
+    height: 100%;
+    overflow: hidden;
+  }
+  html { scrollbar-gutter: auto; }
+
+  /* ---- the left column ---- */
+  .hero {
+    position: fixed;
+    inset: 0 auto 0 0;
+    width: var(--axis);
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-end;
+    padding: 5rem var(--gap) var(--pad) var(--pad);
+    overflow: visible;
+  }
+  .hero .axis { left: calc(var(--axis) - 1px); }
+  .ghost { display: none; }
+
+  .ticks { display: block; order: 0; margin: auto 0; }
+  .meta,
+  .role {
+    position: static;
+    padding: 0;
+    justify-self: auto;
+    text-align: left;
+    color: var(--mute);
+  }
+  .role { order: 1; }
+  .role br { display: none; }
+  .meta { order: 2; margin-bottom: 1.25rem; }
+  .name {
+    order: 3;
+    padding-left: 0;
+  }
+  .name .line { display: block; }
+
+  /* Ticks: a short ruler, one mark per card. The current one grows, turns blue
+     and shows its name; the others show theirs on hover. */
+  .ticks ol { display: grid; gap: 0.15rem; }
+  .ticks a {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    padding: 0.2rem 0;
+    font-size: var(--small);
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+  }
+  .tick {
+    flex: none;
+    width: 1.1rem;
+    height: 1px;
+    background: var(--mute);
+    transition: width 0.5s var(--ease), background-color 0.3s ease;
+  }
+  .tick-name {
+    opacity: 0;
+    transform: translateX(-0.5rem);
+    transition: opacity 0.3s ease, transform 0.5s var(--ease);
+  }
+  .ticks a:hover .tick-name,
+  .ticks a:focus-visible .tick-name { opacity: 0.55; transform: none; }
+  .ticks a.is-on .tick {
+    width: 2.75rem;
+    background: var(--accent);
+  }
+  .ticks a.is-on .tick-name { opacity: 1; transform: none; }
+
+  /* ---- the reel ----
+     Inside it, --left is the cards' own label column and --pad their margin. */
+  .reel {
+    --left: clamp(9.5rem, 11vw, 12rem);
+    --pad: clamp(1.25rem, 2vw, 2rem);
+    --gap: clamp(0.875rem, 1.2vw, 1.25rem);
+    --title: clamp(1.75rem, 2.6vw, 3rem);
+    --title-s: clamp(1.5rem, 2.1vw, 2.375rem);
+    --mega: clamp(2.25rem, 4vw, 4.5rem);
+    --list-xl: clamp(1.5rem, 2.6vw, 2.75rem);
+    --head: clamp(1.25rem, 1.7vw, 1.75rem);
+    --ghost-size: clamp(2.5rem, 5vw, 5.5rem);
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: calc(var(--axis) + 1px);   /* the hero's axis, measured with the root sizes */
+    right: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+    padding: 18vh var(--pad) 0 calc(var(--gap) * 2);
+    /* Cards fade out under the top bar instead of colliding with the nav. */
+    -webkit-mask-image: linear-gradient(to bottom, transparent 2.5rem, #000 7rem);
+    mask-image: linear-gradient(to bottom, transparent 2.5rem, #000 7rem);
+  }
+  .reel::-webkit-scrollbar { display: none; }
+  .is-loading .reel { opacity: 0; }
+  .is-ready .reel { transition: opacity 1s ease 0.5s; }
+
+  .spine::before { display: none; }
+
+  /* A card: the old screen in miniature, with its own axis between label and body. */
+  .reel .screen {
+    min-height: 0;
+    margin-bottom: 14vh;
+    padding: clamp(2rem, 5vh, 3.25rem) var(--pad);
+    border: 1px solid var(--rule);
+    background: var(--paper);
+    backface-visibility: hidden;
+  }
+  .reel .screen::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: calc(var(--pad) + var(--left));
+    width: 1px;
+    background: var(--ink);
+  }
+  .reel .body { gap: clamp(1.75rem, 4.5vh, 3rem); }
+  .reel .side { max-width: calc(var(--left) - var(--gap)); }
+
+  .reel .link-name { font-size: clamp(1.75rem, 3.6vw, 3.5rem); }
+  /* The links run to the card's bottom edge, which closes the list. */
+  .reel #contact { padding-bottom: 0; }
+  .reel .branch-end { display: none; }
+
+  .reel .foot { padding: 4vh 0 var(--pad); }
 }
 
 /* ---------- small: the axis moves to the left margin, no scenes ---------- */
