@@ -5,17 +5,16 @@
 //    Only on the home page, once per session; inner pages arrive already in place.
 // 2. Stage (desktop): the page never scrolls. The hero is a fixed left column and
 //    the reel on the right is its own scroller. The wheel, anywhere on the page,
-//    moves the reel with easing.
-//    Home (reel with data-tilt data-snap): one title card per page. Cards tilt in
-//    perspective as they leave the middle, and when the wheel stops between two
-//    cards the reel carries on to the next one in the direction you were going.
-//    Inner pages: the section scrolls freely.
+//    moves the reel with easing (inner pages).
+//    Home: the title cards float freely over the reel. The wheel speeds them up
+//    for a moment; a card under the pointer or holding the focus stays still.
 // 3. Scenes (GSAP ScrollTrigger), desktop, inside the reel:
+//    float     the home cards fade in one after another once the name has landed
 //    about     the statement lights up word by word once the page is in
 //    stack     each line slides in from alternating sides into place
 //    exp       the timeline is built job by job as it goes by
 //    certs     lines rise in sequence
-//    Everything else assembles as one sequence per section or card as it arrives.
+//    Everything else assembles as one sequence per section as it arrives.
 //    On phones the page scrolls normally and pieces reveal as they enter.
 
 (() => {
@@ -60,15 +59,8 @@
 
   const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
 
-  // Distance from the top of the reel's content to an element in it. Unlike
-  // getBoundingClientRect, it ignores the cards' tilt.
-  const offsetIn = el => {
-    let y = 0;
-    while (el && el !== reel) { y += el.offsetTop; el = el.offsetParent; }
-    return y;
-  };
-
-  const stage = setupStage();
+  setupStage();
+  setupFloat();
   setupNav();
   if (!motion) return;
 
@@ -80,11 +72,6 @@
     return;
   }
   gsap.registerPlugin(ScrollTrigger);
-
-  // Card tilt has to be off while ScrollTrigger measures, or the tilted boxes
-  // would shift every start and end.
-  ScrollTrigger.addEventListener("refreshInit", stage.flatten);
-  ScrollTrigger.addEventListener("refresh", stage.update);
 
   // ------------------------------------------------------------------------
   // Motion tokens: one small set, reused everywhere
@@ -117,21 +104,12 @@
   });
 
   // ------------------------------------------------------------------------
-  // Stage: the reel's scrolling, the cards' tilt
+  // Stage: the reel's scrolling
   // ------------------------------------------------------------------------
   function setupStage() {
-    const none = { flatten() {}, update() {} };
-    if (!reel) return none;
-
+    if (!reel) return;
     const smooth = motion;
-    const cards = [...reel.querySelectorAll(".card")];
-    const tilts = motion && reel.hasAttribute("data-tilt");
-    const snaps = reel.hasAttribute("data-snap");
     const EASE = 0.1;          // share of the remaining distance covered per frame
-    const TILT = 16;           // deg a card turns at full tilt
-    const FLAT = 0.12;         // within this share of the viewport from the middle, cards stay flat
-    const RAMP = 0.5;          // share of the viewport over which the tilt builds up
-    const DEPTH = 1.6;         // perspective distance, in card widths
 
     let target = 0;
     let current = 0;
@@ -156,42 +134,12 @@
     };
     const base = () => (raf ? target : reel.scrollTop);
 
-    // ---- resting points ----
-    // A card rests with its top just under the bar (where links to it land).
-    // A card taller than the screen can rest anywhere from its top to its
-    // bottom, so it can be read through. The very start and end are rests too.
-    const TOP = 0.12;          // share of the viewport above a resting card
-    const BOTTOM = 0.06;       // share below a tall card resting on its bottom
-    const SETTLE = 160;        // ms without wheel or key input before settling
-    let zones = [];
-    let dir = 1;
-    let idle;
-    const settle = () => {
-      if (!snaps || !onStage() || !zones.length) return;
-      const y = target;
-      if (zones.some(([a, b]) => y >= a - 3 && y <= b + 3)) return;
-      let to = null;
-      if (dir > 0) {
-        const next = zones.find(([a]) => a > y);
-        if (next) to = next[0];
-      } else {
-        for (let i = zones.length - 1; i >= 0; i--) if (zones[i][1] < y) { to = zones[i][1]; break; }
-      }
-      if (to !== null) go(to);
-    };
-    const nudge = (y, d) => {
-      dir = d;
-      go(y);
-      clearTimeout(idle);
-      idle = setTimeout(settle, SETTLE);
-    };
-
     // The wheel anywhere on the page drives the reel.
     addEventListener("wheel", e => {
       if (!onStage() || e.ctrlKey || !e.deltaY) return;   // ctrl + wheel is zoom
       e.preventDefault();
       const unit = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? reel.clientHeight : 1;
-      nudge(base() + e.deltaY * unit, Math.sign(e.deltaY));
+      go(base() + e.deltaY * unit);
     }, { passive: false });
 
     // Keys work wherever the focus is.
@@ -207,77 +155,160 @@
       if (e.key === "End") { e.preventDefault(); go(max()); return; }
       if (!(e.key in moves)) return;
       e.preventDefault();
-      nudge(base() + moves[e.key], Math.sign(moves[e.key]));
+      go(base() + moves[e.key]);
     });
 
-    // In-page links into the reel glide there instead of jumping. The skip link
-    // targets the reel itself: it moves focus there and leaves the scroll alone.
+    // The skip link targets the reel: move the focus there, leave the scroll alone.
     document.addEventListener("click", e => {
-      const a = e.target.closest && e.target.closest('a[href^="#"]');
+      const a = e.target.closest && e.target.closest(`a[href="#${reel.id}"]`);
       if (!a || !onStage()) return;
-      const id = a.getAttribute("href").slice(1);
-      const el = id && document.getElementById(id);
-      if (el === reel) { e.preventDefault(); reel.setAttribute("tabindex", "-1"); reel.focus({ preventScroll: true }); return; }
-      if (!el || !reel.contains(el)) return;
       e.preventDefault();
-      clearTimeout(idle);
-      go(offsetIn(el) - reel.clientHeight * TOP);
-      if (!el.hasAttribute("tabindex")) el.setAttribute("tabindex", "-1");
-      el.focus({ preventScroll: true });
+      reel.setAttribute("tabindex", "-1");
+      reel.focus({ preventScroll: true });
     });
 
     // Scrolls this script did not make (focus moving with Tab, find in page,
     // the scrollbar on touch screens) become the new resting point.
-    let queued = false;
     reel.addEventListener("scroll", () => {
       if (!raf && Math.abs(reel.scrollTop - own) > 1) target = current = reel.scrollTop;
-      if (!queued) { queued = true; requestAnimationFrame(update); }
+    }, { passive: true });
+  }
+
+  // ------------------------------------------------------------------------
+  // Home: the cards float
+  // ------------------------------------------------------------------------
+  // Each card cruises on a heading that slowly wanders, bounces off the edges
+  // of the field and steers away from the others. The wheel adds a boost that
+  // fades out; a card under the pointer or holding the focus eases to a stop so
+  // it can be clicked. Off the stage (phones) the cards go back to a list.
+  function setupFloat() {
+    const field = document.querySelector(".cards[data-float]");
+    if (!field || !motion) return;
+
+    const BASE = 22;           // px/s cruising speed
+    const BOOST = 0.03;        // extra speed, in multiples of BASE, per px of wheel
+    const MAX_BOOST = 9;       // the fastest they get, in multiples of BASE
+    const CALM = 0.7;          // s, time constant of the boost fading out
+    const HOLD = 0.18;         // s, time constant of a held card stopping
+    const TURN = 0.6;          // rad/s, how far a heading wanders
+    const SPACE = 20;          // px kept between cards
+    const PUSH = 0.25;         // share of an overlap resolved per frame
+
+    const items = [...field.querySelectorAll(".card")].map(el => ({
+      el, x: 0, y: 0, w: 0, h: 0,
+      a: Math.random() * Math.PI * 2,     // heading
+      s: 0.8 + Math.random() * 0.4,       // own speed
+      p: Math.random() * 100,             // own phase for the wander
+      go: 1,                              // 1 cruising, 0 held
+      held: false,
+    }));
+    let W = 0;
+    let H = 0;
+    let boost = 0;
+    let raf = 0;
+    let last = 0;
+
+    const draw = () => items.forEach(it => {
+      it.el.style.transform = `translate3d(${it.x.toFixed(1)}px, ${it.y.toFixed(1)}px, 0)`;
+    });
+    const keepIn = it => {
+      it.x = clamp(it.x, 0, Math.max(0, W - it.w));
+      it.y = clamp(it.y, 0, Math.max(0, H - it.h));
+    };
+    const fit = () => {
+      W = field.clientWidth;
+      H = field.clientHeight;
+      items.forEach(it => {
+        it.w = it.el.offsetWidth;
+        it.h = it.el.offsetHeight;
+        keepIn(it);
+      });
+    };
+
+    const frame = now => {
+      raf = requestAnimationFrame(frame);
+      const dt = Math.min(0.05, (now - last) / 1000);
+      last = now;
+      boost *= Math.exp(-dt / CALM);
+      const t = now / 1000;
+
+      for (const it of items) {
+        it.go += ((it.held ? 0 : 1) - it.go) * (1 - Math.exp(-dt / HOLD));
+        it.a += Math.sin(t * 0.37 + it.p) * TURN * dt;
+        const v = BASE * it.s * (1 + boost) * it.go;
+        it.x += Math.cos(it.a) * v * dt;
+        it.y += Math.sin(it.a) * v * dt;
+        if (it.x < 0) { it.x = 0; it.a = Math.PI - it.a; }
+        else if (it.x > W - it.w) { it.x = W - it.w; it.a = Math.PI - it.a; }
+        if (it.y < 0) { it.y = 0; it.a = -it.a; }
+        else if (it.y > H - it.h) { it.y = H - it.h; it.a = -it.a; }
+      }
+
+      // Overlapping pairs ease apart and turn away from each other. A held card
+      // stays put; the other one makes way.
+      for (let i = 0; i < items.length; i++) {
+        for (let j = i + 1; j < items.length; j++) {
+          const A = items[i];
+          const B = items[j];
+          if (A.held && B.held) continue;
+          const ox = Math.min(A.x + A.w, B.x + B.w) - Math.max(A.x, B.x) + SPACE;
+          const oy = Math.min(A.y + A.h, B.y + B.h) - Math.max(A.y, B.y) + SPACE;
+          if (ox <= 0 || oy <= 0) continue;
+          const wa = A.held ? 0 : B.held ? 1 : 0.5;
+          const dx = (A.x + A.w / 2) - (B.x + B.w / 2);
+          const dy = (A.y + A.h / 2) - (B.y + B.h / 2);
+          if (ox < oy) {
+            const d = Math.sign(dx || 1) * ox * PUSH;
+            A.x += d * wa;
+            B.x -= d * (1 - wa);
+          } else {
+            const d = Math.sign(dy || 1) * oy * PUSH;
+            A.y += d * wa;
+            B.y -= d * (1 - wa);
+          }
+          const away = Math.atan2(dy, dx);
+          if (!A.held) A.a = away;
+          if (!B.held) B.a = away + Math.PI;
+        }
+      }
+      items.forEach(keepIn);
+      draw();
+    };
+
+    // Start from where the CSS rests them (--x, --y), then move by transforms.
+    const start = () => {
+      if (raf || !onStage()) return;
+      items.forEach(it => { it.x = it.el.offsetLeft; it.y = it.el.offsetTop; });
+      field.classList.add("is-floating");
+      fit();
+      draw();
+      last = performance.now();
+      raf = requestAnimationFrame(frame);
+    };
+    const stop = () => {
+      cancelAnimationFrame(raf);
+      raf = 0;
+      field.classList.remove("is-floating");
+      items.forEach(it => { it.el.style.transform = ""; });
+    };
+
+    addEventListener("wheel", e => {
+      if (!raf) return;
+      const unit = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? innerHeight : 1;
+      boost = Math.min(MAX_BOOST, boost + Math.abs(e.deltaY * unit) * BOOST);
     }, { passive: true });
 
-    // ---- tilt ----
-    // A card is flat while it holds the middle of the screen. Leaving, it turns
-    // on its vertical axis, seen from the middle of the screen: above the middle
-    // its top edge flares out, below it the bottom edge does.
-    let geo = [];
-    const measure = () => {
-      geo = cards.map(c => ({ c, top: offsetIn(c), h: c.offsetHeight, w: c.offsetWidth }));
-      const vh = reel.clientHeight;
-      const end = max();
-      zones = geo.map(g => {
-        const a = clamp(g.top - vh * TOP, 0, end);
-        const b = clamp(g.top + g.h - vh * (1 - BOTTOM), a, end);
-        return [a, b];
-      });
-      if (zones.length) zones[0][0] = 0;                 // the first card rests from the very top
-      zones.push([end, end]);                            // and the footer at the very end
-    };
-    const flatten = () => cards.forEach(c => { c.style.transform = ""; c.style.transformOrigin = ""; });
-    function update() {
-      queued = false;
-      if (!tilts || !onStage()) { flatten(); return; }
-      if (!geo.length) measure();
-      const vh = reel.clientHeight;
-      const mid = vh / 2;
-      const s = reel.scrollTop;
-      for (const g of geo) {
-        const top = g.top - s;
-        if (top > vh || top + g.h < 0) continue;            // off screen
-        const m = Math.min(g.h / 2, vh * 0.3);              // tall cards stay flat longer
-        const near = clamp(mid, top + m, top + g.h - m);
-        const k = clamp((Math.abs(near - mid) / vh - FLAT) / RAMP, 0, 1);
-        if (!k) { g.c.style.transform = ""; g.c.style.transformOrigin = ""; continue; }
-        const eased = k * k * (3 - 2 * k);
-        g.c.style.transformOrigin = `50% ${(mid - top).toFixed(1)}px`;
-        g.c.style.transform = `perspective(${Math.round(g.w * DEPTH)}px) rotateY(${(-TILT * eased).toFixed(2)}deg)`;
-      }
-    }
+    items.forEach(it => {
+      const hold = on => () => { it.held = on; };
+      it.el.addEventListener("pointerenter", hold(true));
+      it.el.addEventListener("pointerleave", hold(false));
+      it.el.addEventListener("focus", hold(true));
+      it.el.addEventListener("blur", hold(false));
+    });
 
-    const relayout = () => { measure(); update(); };
-    if (window.ResizeObserver) new ResizeObserver(relayout).observe(reel.querySelector(".spine") || reel);
-    stageQuery.addEventListener("change", relayout);
-    fontsReady.then(relayout);
-
-    return { flatten, update: relayout };
+    if (window.ResizeObserver) new ResizeObserver(() => { if (raf) fit(); }).observe(field);
+    stageQuery.addEventListener("change", () => (onStage() ? start() : stop()));
+    start();
   }
 
   // ------------------------------------------------------------------------
@@ -391,7 +422,6 @@
   let mm;
 
   function init() {
-    stage.flatten();   // split lines on the cards' real, untilted width
     document.querySelectorAll("[data-lines]").forEach(splitLines);
     document.querySelectorAll("[data-words]").forEach(splitWords);
 
@@ -402,6 +432,7 @@
       ScrollTrigger.defaults({ scroller: desktop && reel ? reel : window });
 
       if (desktop) {
+        floatScene(handled);
         aboutScene(handled, true);
         stackScene(handled);
         expScene(handled);
@@ -443,6 +474,26 @@
       .to(hero.querySelector(".ghost-l"), { xPercent: -45, ease: "none" }, 0)
       .to(hero.querySelector(".ghost-r"), { xPercent: 45, ease: "none" }, 0)
       .to(hero.querySelectorAll(".meta, .role"), { autoAlpha: 0, ease: "none", duration: 0.4 }, 0);
+  }
+
+  // Home cards: they fade in one after another once the name has landed, each
+  // title rising out of its mask. They are already moving; only opacity is
+  // animated, so the float keeps the transform to itself.
+  function floatScene(handled) {
+    const field = document.querySelector(".cards[data-float]");
+    if (!field) return;
+    const cards = field.querySelectorAll(".card");
+    const fades = field.querySelectorAll("[data-fade]");
+    cards.forEach(c => c.querySelectorAll("[data-lines], [data-fade]").forEach(el => handled.add(el)));
+    gsap.set(cards, { autoAlpha: 0 });
+    gsap.set(lines(field), { yPercent: 115 });
+    gsap.set(fades, { autoAlpha: 0 });
+    introDone.then(() => {
+      gsap.timeline()
+        .to(cards, { autoAlpha: 1, duration: 0.8, stagger: 0.15, ease: "power2.out" }, 0)
+        .to(lines(field), { yPercent: 0, duration: M.dur.lines, ease: M.ease.mask, stagger: 0.15 }, 0.2)
+        .to(fades, { autoAlpha: 1, duration: 0.6, stagger: 0.15 }, 0.4);
+    });
   }
 
   // About: the statement lights up word by word, then the paragraph arrives.
@@ -540,7 +591,7 @@
     if (desktop) {
       const screens = new Map();
       pieces.forEach(el => {
-        const screen = el.closest(".screen, .card, .foot") || el;
+        const screen = el.closest(".screen, .foot") || el;
         if (!screens.has(screen)) screens.set(screen, []);
         screens.get(screen).push(el);
       });
