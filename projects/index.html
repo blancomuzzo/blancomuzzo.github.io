@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Projects — Nicolás Blanco Muzzolon</title>
+  <meta name="description" content="Things I build on Salesforce.">
+  <meta property="og:title" content="Projects — Nicolás Blanco Muzzolon">
+  <meta property="og:description" content="Things I build on Salesforce.">
+  <meta name="theme-color" content="#000000">
+
+  <!-- Runs before first paint:
+       - ?theme=navy|graphite|oxblood|forest previews an alternative palette
+       - arms the motion; on the home page, the first visit of a session also
+         hides the hero for the load sequence
+       Skipped for reduced motion. The timer is a failsafe if the scripts never run. -->
+  <script>
+    (function () {
+      var root = document.documentElement;
+      var theme = /[?&]theme=([a-z]+)/.exec(location.search);
+      if (theme) root.setAttribute("data-theme", theme[1]);
+      if (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+      root.classList.add("js-motion");
+      if (root.getAttribute("data-page") === "home") {
+        var seen = false;
+        try { seen = sessionStorage.getItem("intro") === "1"; sessionStorage.setItem("intro", "1"); } catch (e) {}
+        if (!seen) root.classList.add("is-loading");
+      }
+      setTimeout(function () {
+        if (root.classList.contains("is-loading")) {
+          root.classList.remove("is-loading");
+          root.classList.add("is-ready");
+        }
+        if (!root.classList.contains("motion-on")) root.classList.remove("js-motion");
+      }, 7000);
+    })();
+  </script>
+
+  <!-- Necto Mono by Marco Condello / Collletttivo, SIL OFL (fonts/OFL.txt) -->
+  <link rel="preload" href="../fonts/necto-mono-regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../styles.css">
+
+  <!-- Motion: GSAP + ScrollTrigger for the scenes. If they fail to load, the page
+       stays fully readable without motion. -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+  <script src="../script/script.js" defer></script>
+</head>
+<body>
+  <a class="skip" href="#content">Skip to content</a>
+
+  <header class="top">
+    <a class="mark fade" href="../" aria-label="Nicolás Blanco Muzzolon, home">nbm</a>
+    <nav class="nav fade" style="--d: 200" aria-label="Pages">
+      <a href="../about/">About</a>
+      <a href="../projects/" aria-current="page">Projects</a>
+      <a href="../experience/">Experience</a>
+      <a href="../contact/">Contact</a>
+    </nav>
+  </header>
+
+  <main>
+
+    <!-- HERO: the same on every page. On the home page's first visit it plays the
+         load sequence. On desktop it stays put as the left column while the reel
+         on the right scrolls; on phones it scrolls away (and inner pages skip it). -->
+    <section class="hero" aria-label="Introduction">
+      <span class="axis" aria-hidden="true"></span>
+
+      <p class="meta fade" style="--d: 120">Based in Argentina</p>
+      <p class="role fade" style="--d: 320">Senior <br>Salesforce Developer</p>
+
+      <p class="name">
+        <span class="row">
+          <span class="line" style="--i: 0"><span class="count" aria-hidden="true">0</span><span class="word">Nicolás</span></span>
+        </span>
+        <span class="row">
+          <span class="line" style="--i: 1"><span class="word">Blanco</span></span>
+          <span class="line" style="--i: 2"><span class="word">Muzzolon</span></span>
+        </span>
+      </p>
+
+      <p class="ghost ghost-l" aria-hidden="true">blanco</p>
+      <p class="ghost ghost-r" aria-hidden="true">muzzo</p>
+    </section>
+
+    <!-- Motion markup (read by script/script.js):
+         data-scene  a section with its own choreography
+         data-lines  text revealed line by line through masks
+         data-words  text that lights up word by word with the scroll
+         data-fade   a block that fades and rises in
+         data-side   a label that slides out from behind the axis
+         data-rule   a rule drawn out from the axis
+         data-node   a node on the axis -->
+    <div class="reel" id="content">
+    <a class="back" href="../">← All sections</a>
+    <div class="spine">
+
+      <!-- PROJECTS -->
+      <section class="screen" id="projects" aria-labelledby="h-projects">
+        <h2 class="label" id="h-projects"><span data-side>Projects</span></h2>
+        <div class="body">
+          <p class="lead" data-lines>Things I build.</p>
+          <article class="project" id="p-flex" aria-labelledby="h-flex">
+            <header>
+              <p class="status" data-fade><span class="dot" aria-hidden="true"></span>In progress</p>
+              <h3 class="mega" id="h-flex" data-lines>Flex Queue Dispatcher</h3>
+              <p class="sub" data-fade>Apex, async</p>
+            </header>
+            <p class="p-text" data-fade>An async job dispatcher for orgs that outgrow the Apex flex queue.</p>
+          </article>
+        </div>
+      </section>
+
+    </div>
+    <a class="next" href="../experience/"><span>Next</span> Experience →</a>
+
+    <footer class="foot">
+      <p class="foot-note" data-fade>© <span id="year">2026</span> Nicolás Blanco Muzzolon</p>
+      <p class="foot-note foot-note-r" data-fade>Built by hand in Argentina. Hosted on GitHub Pages.</p>
+    </footer>
+    </div>
+  </main>
+</body>
+</html>

@@ -1,17 +1,18 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-page="home">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Nicolás Blanco Muzzolon — Senior Salesforce Developer</title>
   <meta name="description" content="Senior Salesforce Developer with 7+ years and 8 certifications. Apex, LWC, integrations and solution architecture.">
   <meta property="og:title" content="Nicolás Blanco Muzzolon — Senior Salesforce Developer">
-  <meta property="og:description" content="Apex, LWC, integrations and solution architecture. Tools that work around Salesforce limits.">
+  <meta property="og:description" content="Senior Salesforce Developer with 7+ years and 8 certifications. Apex, LWC, integrations and solution architecture.">
   <meta name="theme-color" content="#000000">
 
   <!-- Runs before first paint:
        - ?theme=navy|graphite|oxblood|forest previews an alternative palette
-       - hides the hero for the load sequence and arms the scroll motion
+       - arms the motion; on the home page, the first visit of a session also
+         hides the hero for the load sequence
        Skipped for reduced motion. The timer is a failsafe if the scripts never run. -->
   <script>
     (function () {
@@ -19,7 +20,12 @@
       var theme = /[?&]theme=([a-z]+)/.exec(location.search);
       if (theme) root.setAttribute("data-theme", theme[1]);
       if (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-      root.classList.add("is-loading", "js-motion");
+      root.classList.add("js-motion");
+      if (root.getAttribute("data-page") === "home") {
+        var seen = false;
+        try { seen = sessionStorage.getItem("intro") === "1"; sessionStorage.setItem("intro", "1"); } catch (e) {}
+        if (!seen) root.classList.add("is-loading");
+      }
       setTimeout(function () {
         if (root.classList.contains("is-loading")) {
           root.classList.remove("is-loading");
@@ -42,39 +48,28 @@
   <script src="script/script.js" defer></script>
 </head>
 <body>
-  <a class="skip" href="#about">Skip to content</a>
+  <a class="skip" href="#content">Skip to content</a>
 
   <header class="top">
-    <a class="mark fade" href="#top" aria-label="Nicolás Blanco Muzzolon, back to top">nbm</a>
-    <nav class="nav fade" style="--d: 200" aria-label="Sections">
-      <a href="#about">About</a>
-      <a href="#projects">Projects</a>
-      <a href="#experience">Experience</a>
-      <a href="#contact">Contact</a>
+    <a class="mark fade" href="./" aria-label="Nicolás Blanco Muzzolon, home">nbm</a>
+    <nav class="nav fade" style="--d: 200" aria-label="Pages">
+      <a href="about/">About</a>
+      <a href="projects/">Projects</a>
+      <a href="experience/">Experience</a>
+      <a href="contact/">Contact</a>
     </nav>
   </header>
 
-  <main id="top">
+  <main>
 
-    <!-- HERO: played once by the load sequence. On desktop it stays put as the left
-         column while the reel on the right scrolls; on phones it scrolls away. -->
+    <!-- HERO: the same on every page. On the home page's first visit it plays the
+         load sequence. On desktop it stays put as the left column while the reel
+         on the right scrolls; on phones it scrolls away (and inner pages skip it). -->
     <section class="hero" aria-label="Introduction">
       <span class="axis" aria-hidden="true"></span>
 
       <p class="meta fade" style="--d: 120">Based in Argentina</p>
       <p class="role fade" style="--d: 320">Senior <br>Salesforce Developer</p>
-
-      <!-- Desktop only: one tick per card in the reel; the current one is named. -->
-      <nav class="ticks fade" style="--d: 420" aria-label="Sections in the reel">
-        <ol>
-          <li><a href="#about"><span class="tick" aria-hidden="true"></span><span class="tick-name">About</span></a></li>
-          <li><a href="#skills"><span class="tick" aria-hidden="true"></span><span class="tick-name">Works with</span></a></li>
-          <li><a href="#projects"><span class="tick" aria-hidden="true"></span><span class="tick-name">Projects</span></a></li>
-          <li><a href="#experience"><span class="tick" aria-hidden="true"></span><span class="tick-name">Experience</span></a></li>
-          <li><a href="#certifications"><span class="tick" aria-hidden="true"></span><span class="tick-name">Certifications</span></a></li>
-          <li><a href="#contact"><span class="tick" aria-hidden="true"></span><span class="tick-name">Contact</span></a></li>
-        </ol>
-      </nav>
 
       <h1 class="name">
         <span class="row">
@@ -90,182 +85,31 @@
       <p class="ghost ghost-r" aria-hidden="true">muzzo</p>
     </section>
 
-    <!-- Motion markup (read by script/script.js):
-         data-scene  a section with its own choreography
-         data-lines  text revealed line by line through masks
-         data-words  text that lights up word by word with the scroll
-         data-fade   a block that fades and rises in
-         data-side   a label that slides out from behind the axis
-         data-rule   a rule drawn out from the axis
-         data-node   a node on the axis
-         On desktop the reel is its own scroller and every .screen in it is a card. -->
-    <div class="reel" id="reel">
-    <div class="spine">
-
-      <!-- ABOUT -->
-      <section class="screen" id="about" data-scene="about" data-nav="about" aria-labelledby="h-about">
-        <h2 class="label" id="h-about"><span data-side>About</span></h2>
-        <div class="body">
-          <p class="lead" data-words>I build Salesforce integrations and small, sharp tools that get orgs past platform limits, with clean Apex, async design and a deep knowledge of the platform.</p>
-          <div class="prose">
-            <p data-fade><span class="js-years">7</span>+ years of experience working with US enterprise clients.</p>
-          </div>
-        </div>
-      </section>
-
-      <section class="screen" id="skills" data-scene="stack" data-nav="about" aria-labelledby="h-stack">
-        <h3 class="label" id="h-stack"><span data-side>Works with</span></h3>
-        <div class="body">
-          <p class="stack" data-lines><span class="skill">Apex</span>, <span class="skill">Lightning Web Components</span>, <span class="skill">SOQL</span>, <span class="skill">Async Apex</span>, <span class="skill">REST APIs</span>, <span class="skill">SOAP APIs</span>, <span class="skill">OAuth 2.0</span>, <span class="skill">Platform Events</span>, <span class="skill">AWS S3</span>, <span class="skill">Omni-Channel</span>, <span class="skill">Data modeling</span>, <span class="skill">CI/CD</span>.</p>
-        </div>
-      </section>
-
-      <!-- PROJECTS -->
-      <section class="screen" id="projects" data-nav="projects" aria-labelledby="h-projects">
-        <h2 class="label" id="h-projects"><span data-side>Projects</span></h2>
-        <div class="body">
-          <p class="lead" data-lines>Things I build.</p>
-          <article class="project" id="p-flex" aria-labelledby="h-flex">
-            <header>
-              <p class="status" data-fade><span class="dot" aria-hidden="true"></span>In progress</p>
-              <h3 class="mega" id="h-flex" data-lines>Flex Queue Dispatcher</h3>
-              <p class="sub" data-fade>Apex, async</p>
-            </header>
-            <p class="p-text" data-fade>An async job dispatcher for orgs that outgrow the Apex flex queue.</p>
-          </article>
-        </div>
-      </section>
-
-      <!-- EXPERIENCE: on desktop the timeline is built job by job while the screen holds -->
-      <section id="experience" aria-labelledby="h-exp">
-        <div class="screen exp" data-scene="exp" data-nav="experience">
-          <h2 class="label" id="h-exp"><span data-side>Experience</span></h2>
-          <div class="body">
-            <p class="lead lead-s" data-lines><span class="js-years">7</span>+ years building on Salesforce, with eight certifications.</p>
-            <ol class="jobs">
-              <li class="job job-now">
-                <span class="branch" data-rule aria-hidden="true"></span>
-                <span class="node" data-node aria-hidden="true"></span>
-                <p class="side"><span data-side>2026–now</span></p>
-                <div>
-                  <h3 data-lines>Integrations and communication tools</h3>
-                  <p class="sub" data-fade>Senior Salesforce Developer</p>
-                </div>
-                <p class="job-text" data-fade>Integrations with external platforms for US enterprise clients, over REST APIs, OAuth and AWS S3. Plus in-house tools that centralize broadcasts and communications inside Salesforce.</p>
-              </li>
-              <li class="job">
-                <span class="branch" data-rule aria-hidden="true"></span>
-                <span class="node" data-node aria-hidden="true"></span>
-                <p class="side"><span data-side>2024–2026</span></p>
-                <div>
-                  <h3 data-lines>Greenfield wealth implementation</h3>
-                  <p class="sub" data-fade>Salesforce Developer and Consultant</p>
-                </div>
-                <p class="job-text" data-fade>A Financial Services Cloud org built from the ground up for wealth management: client records, consent and marketing preferences, designed around GDPR and similar data privacy regulations.</p>
-              </li>
-              <li class="job">
-                <span class="branch" data-rule aria-hidden="true"></span>
-                <span class="node" data-node aria-hidden="true"></span>
-                <p class="side"><span data-side>2022–2024</span></p>
-                <div>
-                  <h3 data-lines>Insights feed</h3>
-                  <p class="sub" data-fade>Salesforce Developer and Consultant</p>
-                </div>
-                <p class="job-text" data-fade>A custom social-style feed in LWC that surfaced key account insights to asset management associates, backed by Apex services that pulled the relevant data together across the org.</p>
-              </li>
-              <li class="job">
-                <span class="branch" data-rule aria-hidden="true"></span>
-                <span class="node" data-node aria-hidden="true"></span>
-                <p class="side"><span data-side>2021–2022</span></p>
-                <div>
-                  <h3 data-lines>KPI portal</h3>
-                  <p class="sub" data-fade>Salesforce Developer and Consultant</p>
-                </div>
-                <p class="job-text" data-fade>An Experience Cloud site built from scratch to deliver KPI dashboards from Tableau CRM, with the access and sharing model to match.</p>
-              </li>
-              <li class="job">
-                <span class="branch" data-rule aria-hidden="true"></span>
-                <span class="node" data-node aria-hidden="true"></span>
-                <p class="side"><span data-side>2020–2021</span></p>
-                <div>
-                  <h3 data-lines>Lightning migration</h3>
-                  <p class="sub" data-fade>Salesforce Developer</p>
-                </div>
-                <p class="job-text" data-fade>Moved an enterprise solution from Classic to Lightning: data model analysis and redesign, new LWC interfaces and integrations.</p>
-              </li>
-              <li class="job">
-                <span class="branch" data-rule aria-hidden="true"></span>
-                <span class="node" data-node aria-hidden="true"></span>
-                <p class="side"><span data-side>2019–2020</span></p>
-                <div>
-                  <h3 data-lines>First steps</h3>
-                  <p class="sub" data-fade>Salesforce Developer</p>
-                </div>
-                <p class="job-text" data-fade>Apex, Visualforce and LWC on a large internal enterprise project, with a focus on bug analysis and fixes.</p>
-              </li>
-            </ol>
-          </div>
-        </div>
-
-        <div class="screen certs-screen" id="certifications" data-scene="certs" data-nav="experience">
-          <h3 class="label"><span data-side>Certifications</span></h3>
-          <div class="body">
-            <ul class="certs">
-              <li data-lines>Application Architect</li>
-              <li data-lines>Data Architect</li>
-              <li data-lines>Sharing and Visibility</li>
-              <li class="minor" data-lines>Platform Developer</li>
-              <li class="minor" data-lines>Platform App Builder</li>
-              <li class="minor" data-lines>Platform Administrator</li>
-              <li class="minor" data-lines>Financial Services Cloud</li>
-              <li class="minor" data-lines>AI Associate</li>
-            </ul>
-          </div>
-        </div>
-      </section>
-
-      <!-- CONTACT -->
-      <section class="screen" id="contact" data-nav="contact" aria-labelledby="h-contact">
-        <h2 class="label" id="h-contact"><span data-side>Contact</span></h2>
-        <div class="body">
-          <p class="lead" data-words>Need an integration designed, or a limit worked around? Let's talk.</p>
-          <ul class="links">
-            <!-- Email: the address is assembled by script/script.js so it never sits
-                 in the HTML for scrapers. Without the script this item stays hidden. -->
-            <li class="js-email" data-u="nblancomuzzolon" data-d="gmail.com" hidden>
-              <span class="branch" data-rule aria-hidden="true"></span>
-              <a class="link">
-                <span class="link-name" data-lines>Email</span>
-                <span class="link-handle" data-fade></span>
-              </a>
-            </li>
-            <li>
-              <span class="branch" data-rule aria-hidden="true"></span>
-              <a class="link" href="https://www.linkedin.com/in/nicol%C3%A1s-blanco-muzzolon/" target="_blank" rel="noopener">
-                <span class="link-name" data-lines>LinkedIn</span>
-                <span class="link-handle" data-fade>nicolás-blanco-muzzolon</span>
-              </a>
-            </li>
-            <li>
-              <span class="branch" data-rule aria-hidden="true"></span>
-              <a class="link" href="https://github.com/blancomuzzo" target="_blank" rel="noopener">
-                <span class="link-name" data-lines>GitHub</span>
-                <span class="link-handle" data-fade>blancomuzzo</span>
-              </a>
-            </li>
-            <li>
-              <span class="branch" data-rule aria-hidden="true"></span>
-              <a class="link" href="https://www.salesforce.com/trailblazer/nblancomuzzolon" target="_blank" rel="noopener">
-                <span class="link-name" data-lines>Trailblazer</span>
-                <span class="link-handle" data-fade>nblancomuzzolon</span>
-              </a>
-              <span class="branch branch-end" data-rule aria-hidden="true"></span>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-    </div>
+    <!-- On desktop the reel is its own scroller: the cards tilt as they leave the
+         middle and the reel settles on a card when the wheel stops. -->
+    <div class="reel" id="content" data-tilt data-snap>
+    <nav class="cards" aria-label="Sections">
+      <a class="card" href="about/">
+        <span class="card-num" data-fade>01</span>
+        <span class="card-title" data-lines>About</span>
+        <span class="card-go" aria-hidden="true">→</span>
+      </a>
+      <a class="card" href="projects/">
+        <span class="card-num" data-fade>02</span>
+        <span class="card-title" data-lines>Projects</span>
+        <span class="card-go" aria-hidden="true">→</span>
+      </a>
+      <a class="card" href="experience/">
+        <span class="card-num" data-fade>03</span>
+        <span class="card-title" data-lines>Experience</span>
+        <span class="card-go" aria-hidden="true">→</span>
+      </a>
+      <a class="card" href="contact/">
+        <span class="card-num" data-fade>04</span>
+        <span class="card-title" data-lines>Contact</span>
+        <span class="card-go" aria-hidden="true">→</span>
+      </a>
+    </nav>
 
     <footer class="foot">
       <p class="foot-note" data-fade>© <span id="year">2026</span> Nicolás Blanco Muzzolon</p>

@@ -527,8 +527,69 @@ a { color: inherit; text-decoration: none; }
   letter-spacing: -0.01em;
 }
 
-/* The reel's section ticks only exist on desktop (see the stage below). */
-.ticks { display: none; }
+/* ---------- home: one title card per page ---------- */
+.card {
+  position: relative;
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  padding: 1.1rem var(--pad) 1.1rem calc(var(--pad) + var(--gap));
+  border-top: 1px solid var(--rule);
+  transition: color 0.3s ease, border-color 0.4s ease;
+}
+.card:last-child { border-bottom: 1px solid var(--rule); }
+.card-num {
+  flex: none;
+  width: 2.5rem;
+  color: var(--mute);
+  font-size: var(--small);
+}
+.card-title {
+  flex: 1;
+  font-size: var(--title);
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+.card-go {
+  font-size: var(--title);
+  line-height: 1;
+  transition: transform 0.5s var(--ease);
+}
+/* Large type only, so the accent keeps its contrast. */
+.card:hover,
+.card:focus-visible { color: var(--accent); }
+.card:hover .card-num,
+.card:focus-visible .card-num { color: var(--accent); }
+.card:hover .card-go,
+.card:focus-visible .card-go { transform: translateX(0.35rem); }
+
+/* ---------- inner pages: way back and way on ---------- */
+.back {
+  display: inline-block;
+  margin: 4.5rem 0 0 calc(var(--pad) + var(--gap));
+  color: var(--mute);
+  font-size: var(--small);
+  transition: color 0.25s ease;
+}
+.next {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 1rem;
+  margin: 0 var(--pad) clamp(3rem, 10vh, 6rem) calc(var(--pad) + var(--gap));
+  font-size: var(--title-s);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  transition: color 0.25s ease;
+}
+.next span {
+  color: var(--mute);
+  font-size: var(--small);
+  letter-spacing: -0.01em;
+}
+.back:hover,
+.back:focus-visible { color: var(--ink); }
+.next:hover,
+.next:focus-visible { color: var(--accent); }
 
 /* ---------- medium ---------- */
 @media (max-width: 68rem) {
@@ -538,11 +599,18 @@ a { color: inherit; text-decoration: none; }
   .job-text { max-width: 34rem; }
 }
 
+/* Without the stage (phones, short windows), inner pages skip the hero: the
+   name is on the home page, the section is what you came for. */
+@media (max-width: 53rem), (max-height: 33.99rem) {
+  html:not([data-page="home"]) .hero { display: none; }
+}
+
 /* ==========================================================================
    Stage (desktop): the page itself never scrolls. The hero is a fixed left
-   column; on the right, the reel is its own scroller and each .screen in it
-   is a card. script.js smooths the wheel from anywhere on the page into the
-   reel and tilts the cards as they move away from the middle.
+   column; on the right, the reel is its own scroller. script.js smooths the
+   wheel from anywhere on the page into the reel. On the home page the reel
+   holds one title card per page, which tilt as they leave the middle and
+   settle when the wheel stops; inner pages scroll their section freely.
    Same media query as DESKTOP in script.js.
    ========================================================================== */
 @media (min-width: 53.01rem) and (min-height: 34rem) {
@@ -573,7 +641,6 @@ a { color: inherit; text-decoration: none; }
   .hero .axis { left: calc(var(--axis) - 1px); }
   .ghost { display: none; }
 
-  .ticks { display: block; order: 0; margin: auto 0; }
   .meta,
   .role {
     position: static;
@@ -582,49 +649,16 @@ a { color: inherit; text-decoration: none; }
     text-align: left;
     color: var(--mute);
   }
-  .role { order: 1; }
   .role br { display: none; }
-  .meta { order: 2; margin-bottom: 1.25rem; }
+  .meta { order: 1; margin-bottom: 1.25rem; }
   .name {
-    order: 3;
+    order: 2;
     padding-left: 0;
   }
   .name .line { display: block; }
 
-  /* Ticks: a short ruler, one mark per card. The current one grows, turns blue
-     and shows its name; the others show theirs on hover. */
-  .ticks ol { display: grid; gap: 0.15rem; }
-  .ticks a {
-    display: flex;
-    align-items: center;
-    gap: 0.9rem;
-    padding: 0.2rem 0;
-    font-size: var(--small);
-    line-height: 1.25;
-    letter-spacing: -0.01em;
-  }
-  .tick {
-    flex: none;
-    width: 1.1rem;
-    height: 1px;
-    background: var(--mute);
-    transition: width 0.5s var(--ease), background-color 0.3s ease;
-  }
-  .tick-name {
-    opacity: 0;
-    transform: translateX(-0.5rem);
-    transition: opacity 0.3s ease, transform 0.5s var(--ease);
-  }
-  .ticks a:hover .tick-name,
-  .ticks a:focus-visible .tick-name { opacity: 0.55; transform: none; }
-  .ticks a.is-on .tick {
-    width: 2.75rem;
-    background: var(--accent);
-  }
-  .ticks a.is-on .tick-name { opacity: 1; transform: none; }
-
   /* ---- the reel ----
-     Inside it, --left is the cards' own label column and --pad their margin. */
+     Inside it, --left is the sections' own label column and --pad their margin. */
   .reel {
     --left: clamp(9.5rem, 11vw, 12rem);
     --pad: clamp(1.25rem, 2vw, 2rem);
@@ -634,7 +668,6 @@ a { color: inherit; text-decoration: none; }
     --mega: clamp(2.25rem, 4vw, 4.5rem);
     --list-xl: clamp(1.5rem, 2.6vw, 2.75rem);
     --head: clamp(1.25rem, 1.7vw, 1.75rem);
-    --ghost-size: clamp(2.5rem, 5vw, 5.5rem);
     position: fixed;
     top: 0;
     bottom: 0;
@@ -644,8 +677,8 @@ a { color: inherit; text-decoration: none; }
     overflow-y: auto;
     overscroll-behavior: contain;
     scrollbar-width: none;
-    padding: 18vh var(--pad) 0 calc(var(--gap) * 2);
-    /* Cards fade out under the top bar instead of colliding with the nav. */
+    padding-top: 12vh;
+    /* Content fades out under the top bar instead of colliding with the nav. */
     -webkit-mask-image: linear-gradient(to bottom, transparent 2.5rem, #000 7rem);
     mask-image: linear-gradient(to bottom, transparent 2.5rem, #000 7rem);
   }
@@ -653,35 +686,67 @@ a { color: inherit; text-decoration: none; }
   .is-loading .reel { opacity: 0; }
   .is-ready .reel { transition: opacity 1s ease 0.5s; }
 
-  .spine::before { display: none; }
-
-  /* A card: the old screen in miniature, with its own axis between label and body. */
+  /* Inner pages: the section's own axis runs between its labels and its text. */
+  .reel .spine::before { left: calc(var(--pad) + var(--left)); }
   .reel .screen {
     min-height: 0;
+    padding: 0 var(--pad) 14vh;
+  }
+  .reel .body { gap: clamp(1.75rem, 4.5vh, 3rem); }
+  .reel .side { max-width: calc(var(--left) - var(--gap)); }
+  .reel .link-name { font-size: clamp(1.75rem, 3.6vw, 3.5rem); }
+
+  .back { margin: 0 0 6vh calc(var(--pad) + var(--left) + var(--gap)); }
+  .next { margin-left: calc(var(--pad) + var(--left) + var(--gap)); }
+
+  /* Home: the title cards. A narrow number column, its own axis, a big title. */
+  .cards { padding: 6vh var(--pad) 0 calc(var(--gap) * 2); }
+  .card {
+    --num: clamp(3.5rem, 6vw, 6rem);
+    display: grid;
+    grid-template-columns: var(--num) minmax(0, 1fr);
+    align-items: end;
+    min-height: 44vh;
     margin-bottom: 14vh;
-    padding: clamp(2rem, 5vh, 3.25rem) var(--pad);
+    padding: clamp(1.75rem, 4vh, 2.75rem) var(--pad);
     border: 1px solid var(--rule);
     background: var(--paper);
     backface-visibility: hidden;
   }
-  .reel .screen::before {
+  .card:last-child { border-bottom: 1px solid var(--rule); }
+  .card::before {
     content: "";
     position: absolute;
     top: 0;
     bottom: 0;
-    left: calc(var(--pad) + var(--left));
+    left: calc(var(--pad) + var(--num));
     width: 1px;
     background: var(--ink);
   }
-  .reel .body { gap: clamp(1.75rem, 4.5vh, 3rem); }
-  .reel .side { max-width: calc(var(--left) - var(--gap)); }
+  .card-num {
+    grid-column: 1;
+    grid-row: 1;
+    align-self: start;
+    justify-self: end;
+    width: auto;
+    margin-right: var(--gap);
+  }
+  .card-title {
+    grid-column: 2;
+    grid-row: 1;
+    padding-left: var(--gap);
+    font-size: clamp(2.5rem, calc(8.2vw - 1.25rem), 7.5rem);
+    line-height: 0.9;
+  }
+  .card-go {
+    position: absolute;
+    top: clamp(1.75rem, 4vh, 2.75rem);
+    right: var(--pad);
+  }
+  .card:hover,
+  .card:focus-visible { border-color: var(--accent); }
 
-  .reel .link-name { font-size: clamp(1.75rem, 3.6vw, 3.5rem); }
-  /* The links run to the card's bottom edge, which closes the list. */
-  .reel #contact { padding-bottom: 0; }
-  .reel .branch-end { display: none; }
-
-  .reel .foot { padding: 4vh 0 var(--pad); }
+  .reel .foot { padding: 4vh var(--pad) var(--pad); }
 }
 
 /* ---------- small: the axis moves to the left margin, no scenes ---------- */

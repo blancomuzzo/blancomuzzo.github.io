@@ -2,18 +2,20 @@
 // prefers-reduced-motion, the page stays readable and the reel still scrolls.
 //
 // 1. Load sequence: the axis grows while a counter climbs to 100, the name rolls in.
+//    Only on the home page, once per session; inner pages arrive already in place.
 // 2. Stage (desktop): the page never scrolls. The hero is a fixed left column and
 //    the reel on the right is its own scroller. The wheel, anywhere on the page,
-//    moves the reel with easing; cards tilt in perspective as they leave the
-//    middle; ticks on the left name the card in view and jump to any card.
+//    moves the reel with easing.
+//    Home (reel with data-tilt data-snap): one title card per page. Cards tilt in
+//    perspective as they leave the middle, and when the wheel stops between two
+//    cards the reel carries on to the next one in the direction you were going.
+//    Inner pages: the section scrolls freely.
 // 3. Scenes (GSAP ScrollTrigger), desktop, inside the reel:
-//    about     the statement lights up word by word once the page has loaded
+//    about     the statement lights up word by word once the page is in
 //    stack     each line slides in from alternating sides into place
-//    exp       the timeline is built job by job as the card goes by
+//    exp       the timeline is built job by job as it goes by
 //    certs     lines rise in sequence
-//    Every other card assembles as one sequence as it arrives.
-//    When the wheel stops between two cards, the reel carries on to the next
-//    card in the direction you were going, so no card is left half in view.
+//    Everything else assembles as one sequence per section or card as it arrives.
 //    On phones the page scrolls normally and pieces reveal as they enter.
 
 (() => {
@@ -65,9 +67,6 @@
     while (el && el !== reel) { y += el.offsetTop; el = el.offsetParent; }
     return y;
   };
-
-  // Where an element's top sits on screen right now, ignoring tilt.
-  const topOf = el => (onStage() && reel ? offsetIn(el) - reel.scrollTop : el.getBoundingClientRect().top);
 
   const stage = setupStage();
   setupNav();
@@ -125,7 +124,9 @@
     if (!reel) return none;
 
     const smooth = motion;
-    const cards = [...reel.querySelectorAll(".screen")];
+    const cards = [...reel.querySelectorAll(".card")];
+    const tilts = motion && reel.hasAttribute("data-tilt");
+    const snaps = reel.hasAttribute("data-snap");
     const EASE = 0.1;          // share of the remaining distance covered per frame
     const TILT = 16;           // deg a card turns at full tilt
     const FLAT = 0.12;         // within this share of the viewport from the middle, cards stay flat
@@ -166,7 +167,7 @@
     let dir = 1;
     let idle;
     const settle = () => {
-      if (!onStage() || !zones.length) return;
+      if (!snaps || !onStage() || !zones.length) return;
       const y = target;
       if (zones.some(([a, b]) => y >= a - 3 && y <= b + 3)) return;
       let to = null;
@@ -209,13 +210,14 @@
       nudge(base() + moves[e.key], Math.sign(moves[e.key]));
     });
 
-    // Links to a card glide there instead of jumping. "#top" goes back to the start.
+    // In-page links into the reel glide there instead of jumping. The skip link
+    // targets the reel itself: it moves focus there and leaves the scroll alone.
     document.addEventListener("click", e => {
       const a = e.target.closest && e.target.closest('a[href^="#"]');
       if (!a || !onStage()) return;
       const id = a.getAttribute("href").slice(1);
-      if (id === "top") { e.preventDefault(); go(0); return; }
       const el = id && document.getElementById(id);
+      if (el === reel) { e.preventDefault(); reel.setAttribute("tabindex", "-1"); reel.focus({ preventScroll: true }); return; }
       if (!el || !reel.contains(el)) return;
       e.preventDefault();
       clearTimeout(idle);
@@ -252,7 +254,7 @@
     const flatten = () => cards.forEach(c => { c.style.transform = ""; c.style.transformOrigin = ""; });
     function update() {
       queued = false;
-      if (!smooth || !onStage()) { flatten(); return; }
+      if (!tilts || !onStage()) { flatten(); return; }
       if (!geo.length) measure();
       const vh = reel.clientHeight;
       const mid = vh / 2;
@@ -538,12 +540,14 @@
     if (desktop) {
       const screens = new Map();
       pieces.forEach(el => {
-        const screen = el.closest(".screen, .foot") || el;
+        const screen = el.closest(".screen, .card, .foot") || el;
         if (!screens.has(screen)) screens.set(screen, []);
         screens.get(screen).push(el);
       });
       screens.forEach((els, screen) => {
-        const tl = gsap.timeline({ scrollTrigger: { trigger: screen, start: "top 80%", once: true } });
+        // The footer is last: the reel may end before it gets far up the screen.
+        const start = screen.matches(".foot") ? "top bottom" : "top 80%";
+        const tl = gsap.timeline({ scrollTrigger: { trigger: screen, start, once: true } });
         els.forEach((el, i) => {
           const [targets, from, to] = motionFor(el, true);
           tl.fromTo(targets, from, to, i * M.stagger.items);
@@ -630,54 +634,11 @@
   }
 
   // ------------------------------------------------------------------------
-  // Nav and ticks: mark the section in view
+  // Top bar: once the page has scrolled, give it a backing (phones)
   // ------------------------------------------------------------------------
   function setupNav() {
-    const groups = [
-      { links: [...document.querySelectorAll(".nav a")], current: "aria-current" },
-      { links: [...document.querySelectorAll(".ticks a")], current: "class" },
-    ].map(g => ({ ...g, targets: g.links.map(a => document.getElementById(a.getAttribute("href").slice(1))) }));
-    const navScreens = [...document.querySelectorAll("[data-nav]")];
-    let queued = false;
-
-    const atEnd = () => (onStage() && reel
-      ? reel.scrollTop >= reel.scrollHeight - reel.clientHeight - 2
-      : scrollY >= document.documentElement.scrollHeight - innerHeight - 2);
-
-    const mark = (g, on) => g.links.forEach(a => {
-      const yes = a === on;
-      if (g.current === "class") a.classList.toggle("is-on", yes);
-      else if (yes) a.setAttribute("aria-current", "location");
-      else a.removeAttribute("aria-current");
-    });
-
-    const update = () => {
-      queued = false;
-      root.classList.toggle("scrolled", scrollY > 40);
-      const mid = innerHeight * 0.5;
-      const end = atEnd();
-
-      // The top nav covers groups of screens, named by data-nav.
-      let id = null;
-      for (const s of navScreens) if (topOf(s) <= mid) id = s.dataset.nav;
-      if (end && navScreens.length) id = navScreens[navScreens.length - 1].dataset.nav;
-      mark(groups[0], groups[0].links.find(a => a.getAttribute("href") === "#" + id));
-
-      // The ticks follow single cards.
-      const t = groups[1];
-      let on = t.links[0];
-      t.targets.forEach((el, i) => { if (el && topOf(el) <= mid) on = t.links[i]; });
-      if (end && t.links.length) on = t.links[t.links.length - 1];
-      mark(t, on);
-    };
-
-    const queue = () => {
-      if (queued) return;
-      queued = true;
-      requestAnimationFrame(update);
-    };
-    document.addEventListener("scroll", queue, { passive: true, capture: true });
-    addEventListener("resize", queue);
+    const update = () => root.classList.toggle("scrolled", scrollY > 40);
+    addEventListener("scroll", update, { passive: true });
     update();
   }
 })();
