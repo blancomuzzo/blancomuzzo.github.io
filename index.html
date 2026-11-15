@@ -2,23 +2,43 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Nicolás Blanco Muzzolon — Salesforce Integrations Developer</title>
   <meta name="description" content="Salesforce Integrations Developer with 7+ years and 8 certifications. Apex, LWC, integrations and solution architecture.">
   <meta property="og:title" content="Nicolás Blanco Muzzolon — Salesforce Integrations Developer">
   <meta property="og:description" content="Apex, LWC, integrations and solution architecture. Tools that work around Salesforce limits.">
+  <meta name="theme-color" content="#ffffff">
+
+  <!-- Hides the hero before first paint so the load sequence can play.
+       Skipped for reduced motion; the timer is a failsafe if script.js never runs. -->
+  <script>
+    (function () {
+      var root = document.documentElement;
+      if (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+      root.classList.add("is-loading");
+      setTimeout(function () {
+        if (root.classList.contains("is-loading")) {
+          root.classList.remove("is-loading");
+          root.classList.add("is-ready");
+        }
+      }, 7000);
+    })();
+  </script>
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Mona+Sans:wght@200..900&display=swap" rel="stylesheet">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="styles.css">
+  <script src="script/script.js" defer></script>
 </head>
 <body>
-  <canvas id="grid" aria-hidden="true"></canvas>
+  <a class="skip" href="#about">Skip to content</a>
 
-  <header class="nav">
-    <a href="#top" class="logo">nbm<span class="blink">_</span></a>
-    <nav>
+  <header class="top">
+    <a class="mark fade" href="#top" aria-label="Nicolás Blanco Muzzolon, back to top">nbm</a>
+    <p class="meta fade" style="--d: 120">Based in Argentina<br>Working at Launch Consulting</p>
+    <nav class="nav fade" style="--d: 200" aria-label="Sections">
       <a href="#about">About</a>
       <a href="#projects">Projects</a>
       <a href="#experience">Experience</a>
@@ -27,143 +47,211 @@
   </header>
 
   <main id="top">
-    <!-- HERO -->
-    <section class="hero">
-      <p class="mono kicker">// salesforce · integrations · architecture</p>
-      <h1>Nicolás<br><span class="outline">Blanco Muzzolon</span></h1>
-      <p class="lead">I build Salesforce integrations and small, sharp tools that get orgs past platform limits — without buying another cloud.</p>
-      <div class="term" aria-label="Terminal summary">
-        <div class="term-bar"><i></i><i></i><i></i><span class="mono">~/nicolas</span></div>
-        <pre class="mono" id="typed"></pre>
-      </div>
-      <div class="cta">
-        <a href="#projects" class="btn primary">See projects</a>
-        <a href="#contact" class="btn">Get in touch</a>
-      </div>
+    <section class="hero" aria-label="Introduction">
+      <span class="axis" aria-hidden="true"></span>
+
+      <p class="role fade" style="--d: 320">Salesforce<br>Integrations Developer</p>
+
+      <h1 class="name">
+        <span class="row">
+          <span class="line" style="--i: 0"><span class="count" aria-hidden="true">0</span><span class="word">Nicolás</span></span>
+        </span>
+        <span class="row">
+          <span class="line" style="--i: 1"><span class="word">Blanco</span></span>
+          <span class="line" style="--i: 2"><span class="word">Muzzolon</span></span>
+        </span>
+      </h1>
+
+      <p class="ghost ghost-l" aria-hidden="true">blanco</p>
+      <p class="ghost ghost-r" aria-hidden="true">muzzo</p>
     </section>
 
-    <!-- ABOUT -->
-    <section id="about" class="reveal">
-      <h2><span class="num">01</span><span>About</span></h2>
-      <div class="about-grid">
-        <div>
-          <p>Salesforce consultant with 7+ years across Apex, Lightning Web Components, external integrations and Omni-Channel routing. Currently Integrations Developer at Launch Consulting, working with US enterprise clients from Argentina.</p>
-          <p>I'm moving toward solution architecture: designing systems that respect governor limits, sharing models and data volume from day one, instead of patching them later.</p>
+    <div class="spine">
+
+      <!-- ABOUT -->
+      <section class="sec" id="about">
+        <h2 class="sec-label">About</h2>
+        <div class="sec-body">
+          <p class="lead">I build Salesforce integrations and small, sharp tools that get orgs past platform limits, without buying another cloud.</p>
+
+          <div class="prose">
+            <p>Salesforce consultant with 7+ years across Apex, Lightning Web Components, external integrations and Omni-Channel routing. Currently Integrations Developer at Launch Consulting, working with US enterprise clients from Argentina.</p>
+            <p>I'm moving toward solution architecture: designing systems that respect governor limits, sharing models and data volume from day one, instead of patching them later.</p>
+          </div>
+
+          <div class="block">
+            <h3 class="side">Works with</h3>
+            <ul class="list">
+              <li>Apex</li>
+              <li>Lightning Web Components</li>
+              <li>REST and SOAP</li>
+              <li>OAuth 2.0</li>
+              <li>AWS S3</li>
+              <li>Platform Events</li>
+              <li>Queueable and Batch</li>
+              <li>Omni-Channel</li>
+              <li>DevOps Center</li>
+              <li>Data architecture</li>
+              <li>Sharing and visibility</li>
+            </ul>
+          </div>
         </div>
-        <ul class="stats">
-          <li><b data-count="7">0</b><span>+</span><small>years on Salesforce</small></li>
-          <li><b data-count="8">0</b><small>certifications</small></li>
-          <li><b data-count="4">0</b><small>consulting firms</small></li>
-        </ul>
-      </div>
-      <ul class="chips">
-        <li>Apex</li><li>LWC</li><li>REST / SOAP</li><li>OAuth 2.0</li><li>AWS S3</li>
-        <li>Platform Events</li><li>Queueable / Batch</li><li>Omni-Channel</li><li>DevOps Center</li>
-        <li>Data Architecture</li><li>Sharing &amp; Visibility</li>
-      </ul>
-    </section>
+      </section>
 
-    <!-- PROJECTS -->
-    <section id="projects" class="reveal">
-      <h2><span class="num">02</span><span>Projects</span></h2>
-      <p class="sub">Small, well-built tools for a common problem: hitting Salesforce limits on a minimum-license budget.</p>
-      <div class="cards">
-        <article class="card" data-tilt>
-          <div class="card-head">
-            <span class="tag wip">in progress</span>
-            <span class="mono small">Apex · Async</span>
+      <!-- PROJECTS -->
+      <section class="sec" id="projects">
+        <h2 class="sec-label">Projects</h2>
+        <div class="sec-body">
+          <p class="lead">Small, well-built tools for a common problem: hitting Salesforce limits on a minimum-license budget.</p>
+
+          <div class="rows">
+            <article class="item">
+              <p class="side"><span class="dot" aria-hidden="true"></span>In progress</p>
+              <div class="item-head">
+                <h3>Flex Queue Dispatcher</h3>
+                <p class="sub">Apex, async</p>
+              </div>
+              <div class="item-text">
+                <p>An async job dispatcher that queues work beyond the Apex flex queue limit and feeds it to the platform as slots free up, so batch-heavy orgs stop failing with “too many jobs”.</p>
+                <ul class="points">
+                  <li>Custom job queue and scheduler</li>
+                  <li>Priority and retry handling</li>
+                  <li>Observability of pending work</li>
+                </ul>
+              </div>
+            </article>
+
+            <article class="item">
+              <p class="side">Built</p>
+              <div class="item-head">
+                <h3>Bulk Email Relay</h3>
+                <p class="sub">Apex, integrations</p>
+              </div>
+              <div class="item-text">
+                <p>A 100% backend relay that routes Apex-originated email through an external provider, so Sales Cloud orgs can send at volume without Marketing Cloud. UI sends stay native and keep the org's email limit intact.</p>
+                <ul class="points">
+                  <li>Provider-agnostic adapter layer</li>
+                  <li>Only Apex sends are relayed</li>
+                  <li>No UI, no extra licenses</li>
+                </ul>
+              </div>
+            </article>
+
+            <article class="item item-next">
+              <p class="side">Coming soon</p>
+              <div class="item-head">
+                <h3>Next limit to break</h3>
+              </div>
+              <div class="item-text">
+                <p>More tools in the same line are on the way.</p>
+              </div>
+            </article>
           </div>
-          <h3>Flex Queue Dispatcher</h3>
-          <p>An async job dispatcher that queues work beyond the Apex flex queue limit and feeds it to the platform as slots free up — so batch-heavy orgs stop failing with "too many jobs".</p>
-          <ul class="mono small bullets">
-            <li>custom job queue + scheduler</li>
-            <li>priority &amp; retry handling</li>
-            <li>observability of pending work</li>
-          </ul>
-        </article>
+        </div>
+      </section>
 
-        <article class="card" data-tilt>
-          <div class="card-head">
-            <span class="tag">built</span>
-            <span class="mono small">Apex · Integrations</span>
+      <!-- EXPERIENCE -->
+      <section class="sec" id="experience">
+        <h2 class="sec-label">Experience</h2>
+        <div class="sec-body">
+          <p class="lead">Seven-plus years across four consulting firms, with eight Salesforce certifications.</p>
+
+          <ol class="rows">
+            <li class="item job job-now">
+              <p class="side">2026–now</p>
+              <div class="item-head">
+                <h3>Launch Consulting</h3>
+                <p class="sub">Integrations Developer</p>
+              </div>
+              <div class="item-text">
+                <p>Integrations, Apex and LWC for US enterprise clients; external APIs, OAuth and AWS S3.</p>
+              </div>
+            </li>
+            <li class="item job">
+              <p class="side">2021–2026</p>
+              <div class="item-head">
+                <h3>CloudGaia</h3>
+                <p class="sub">Salesforce Developer and Consultant</p>
+              </div>
+              <div class="item-text">
+                <p>Five years of delivery across Service, Sales and custom apps: Omni-Channel routing, integrations and DevOps.</p>
+              </div>
+            </li>
+            <li class="item job">
+              <p class="side">2020–2021</p>
+              <div class="item-head">
+                <h3>Globant / Avanxo</h3>
+                <p class="sub">Salesforce Developer</p>
+              </div>
+              <div class="item-text">
+                <p>Apex and Lightning development for enterprise implementations.</p>
+              </div>
+            </li>
+            <li class="item job">
+              <p class="side">2019–2020</p>
+              <div class="item-head">
+                <h3>Accenture</h3>
+                <p class="sub">Salesforce Developer</p>
+              </div>
+              <div class="item-text">
+                <p>Developer on Manage My Sales (MMS), an internal Salesforce project.</p>
+              </div>
+            </li>
+          </ol>
+
+          <div class="block">
+            <h3 class="side">Certifications</h3>
+            <ul class="list">
+              <li class="strong">Application Architect</li>
+              <li class="strong">Data Architect</li>
+              <li class="strong col-end">Sharing and Visibility Architect</li>
+              <li>Platform Developer</li>
+              <li>Platform App Builder</li>
+              <li>Platform Administrator</li>
+              <li>Agentforce Financial Services Professional (Accredited)</li>
+              <li>AI Associate</li>
+            </ul>
           </div>
-          <h3>Bulk Email Relay</h3>
-          <p>A 100% backend relay that routes Apex-originated email through an external provider, so Sales Cloud orgs can send at volume without Marketing Cloud. UI sends stay native and keep the org's email limit intact.</p>
-          <ul class="mono small bullets">
-            <li>provider-agnostic adapter layer</li>
-            <li>only Apex sends are relayed</li>
-            <li>no UI, no extra licenses</li>
+        </div>
+      </section>
+
+      <!-- CONTACT -->
+      <section class="sec" id="contact">
+        <h2 class="sec-label">Contact</h2>
+        <div class="sec-body">
+          <p class="lead">Need an integration designed, or a limit worked around? Let's talk.</p>
+
+          <ul class="links">
+            <li>
+              <a class="link" href="https://www.linkedin.com/in/nicol%C3%A1s-blanco-muzzolon/" target="_blank" rel="noopener">
+                <span class="link-name">LinkedIn</span>
+                <span class="link-handle">nicolás-blanco-muzzolon</span>
+              </a>
+            </li>
+            <li>
+              <a class="link" href="https://github.com/blancomuzzo" target="_blank" rel="noopener">
+                <span class="link-name">GitHub</span>
+                <span class="link-handle">blancomuzzo</span>
+              </a>
+            </li>
+            <li>
+              <a class="link" href="https://www.salesforce.com/trailblazer/nblancomuzzolon" target="_blank" rel="noopener">
+                <span class="link-name">Trailblazer</span>
+                <span class="link-handle">nblancomuzzolon</span>
+              </a>
+            </li>
           </ul>
-        </article>
+        </div>
+      </section>
 
-        <article class="card ghost">
-          <h3>Next limit to break</h3>
-          <p>More tools in the same line are on the way.</p>
-          <span class="mono small blink-slow">coming soon_</span>
-        </article>
-      </div>
-    </section>
-
-    <!-- EXPERIENCE -->
-    <section id="experience" class="reveal">
-      <h2><span class="num">03</span><span>Experience</span></h2>
-      <ol class="timeline">
-        <li>
-          <span class="when mono">2026 — <span>now</span></span>
-          <h3>Launch Consulting</h3>
-          <p class="role">Integrations Developer</p>
-          <p>Integrations, Apex and LWC for US enterprise clients; external APIs, OAuth and AWS S3.</p>
-        </li>
-        <li>
-          <span class="when mono">2021 — 2026</span>
-          <h3>CloudGaia</h3>
-          <p class="role">Salesforce Developer / Consultant</p>
-          <p>Five years of delivery across Service, Sales and custom apps: Omni-Channel routing, integrations and DevOps.</p>
-        </li>
-        <li>
-          <span class="when mono">2020 — 2021</span>
-          <h3>Globant / Avanxo</h3>
-          <p class="role">Salesforce Developer</p>
-          <p>Apex and Lightning development for enterprise implementations.</p>
-        </li>
-        <li>
-          <span class="when mono">2019 — 2020</span>
-          <h3>Accenture</h3>
-          <p class="role">Salesforce Developer</p>
-          <p>Developer on Manage My Sales (MMS), an internal Salesforce project.</p>
-        </li>
-      </ol>
-
-      <h3 class="certs-title">Certifications</h3>
-      <ul class="certs">
-        <li class="hl">Application Architect</li>
-        <li class="hl">Data Architect</li>
-        <li class="hl">Sharing &amp; Visibility Architect</li>
-        <li>Platform Developer</li>
-        <li>Platform App Builder</li>
-        <li>Platform Administrator</li>
-        <li>Agentforce Financial Services Professional (Accredited)</li>
-        <li>AI Associate</li>
-      </ul>
-    </section>
-
-    <!-- CONTACT -->
-    <section id="contact" class="reveal contact">
-      <h2><span class="num">04</span><span>Contact</span></h2>
-      <p class="big">Need an integration designed, or a limit worked around? Let's talk.</p>
-      <div class="cta">
-        <a class="btn primary" href="https://www.linkedin.com/in/nicol%C3%A1s-blanco-muzzolon/" target="_blank" rel="noopener">LinkedIn</a>
-        <a class="btn" href="https://github.com/blancomuzzo" target="_blank" rel="noopener">GitHub</a>
-        <a class="btn" href="https://www.salesforce.com/trailblazer/nblancomuzzolon" target="_blank" rel="noopener">Trailblazer</a>
-      </div>
-    </section>
+    </div>
   </main>
 
-  <footer class="mono small">
-    <span>© <span id="year"></span> Nicolás Blanco Muzzolon</span>
-    <span>Built by hand · hosted on GitHub Pages · Argentina 🇦🇷</span>
+  <footer class="foot">
+    <p class="foot-note">© <span id="year">2026</span> Nicolás Blanco Muzzolon</p>
+    <p class="foot-note foot-note-r">Built by hand in Argentina. Hosted on GitHub Pages.</p>
+    <p class="foot-word" aria-hidden="true">blanco</p>
+    <p class="foot-word foot-word-r" aria-hidden="true">muzzo</p>
   </footer>
-
-  <script src="script/script.js"></script>
 </body>
 </html>

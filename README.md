@@ -1,9 +1,10 @@
 # blancomuzzo.github.io
 
-Personal portfolio — plain HTML, CSS and JS. No build step.
+Personal portfolio. Plain HTML, CSS and JS, served by GitHub Pages. No build step.
 
-- `index.html` — content (English is the base text)
-- `styles.css` — all styling
-- `script/script.js` — terminal typing, scroll reveal, card tilt, animated background
+- `index.html`: content (English is the base text)
+- `styles.css`: all styling. The tokens at the top set the colors, the type scale and where the vertical axis sits
+- `script/script.js`: the load sequence (counter and axis). Everything else is CSS
+- `favicon.svg`
 
-Run locally: `python3 -m http.server` and open http://localhost:8000
+Run locally: `python -m http.server` and open http://localhost:8000
