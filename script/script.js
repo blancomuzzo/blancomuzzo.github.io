@@ -421,15 +421,16 @@
     ...extra,
   });
 
-  // Phones: leaving the hero, the name lags behind the scroll, the corner words part.
+  // Phones, home page: leaving the hero, the name lags behind the scroll, the
+  // corner words part, the lines around the name fade.
   function heroScene() {
     const hero = document.querySelector(".hero");
-    if (!hero) return;
+    if (!hero || !hero.querySelector(".name")) return;   // inner pages: a plain header
     gsap.timeline({ scrollTrigger: { trigger: hero, start: "top top", end: "bottom top", scrub: true, invalidateOnRefresh: true } })
       .to(hero.querySelector(".name"), { y: () => innerHeight * 0.22, ease: "none" }, 0)
       .to(hero.querySelector(".ghost-l"), { xPercent: -45, ease: "none" }, 0)
       .to(hero.querySelector(".ghost-r"), { xPercent: 45, ease: "none" }, 0)
-      .to(hero.querySelectorAll(".meta, .role"), { autoAlpha: 0, ease: "none", duration: 0.4 }, 0);
+      .to(hero.querySelectorAll(".role"), { autoAlpha: 0, ease: "none", duration: 0.4 }, 0);
   }
 
   // About: the statement lights up word by word, then the paragraph arrives.

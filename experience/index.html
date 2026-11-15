@@ -7,7 +7,7 @@
   <meta name="description" content="7+ years building on Salesforce, with eight certifications.">
   <meta property="og:title" content="Experience — Nicolás Blanco Muzzolon">
   <meta property="og:description" content="7+ years building on Salesforce, with eight certifications.">
-  <meta name="theme-color" content="#000000">
+  <meta name="theme-color" content="#fafaf7">
 
   <!-- Runs before first paint:
        - ?theme=navy|graphite|oxblood|forest previews an alternative palette
@@ -62,27 +62,12 @@
 
   <main>
 
-    <!-- HERO: the same on every page. On the home page's first visit it plays the
-         load sequence. On desktop it stays put as the left column while the reel
-         on the right scrolls; on phones it scrolls away (and inner pages skip it). -->
-    <section class="hero" aria-label="Introduction">
+    <!-- The page's own left column: the way home, the section's title and one
+         line about it. On desktop it stays put while the content scrolls. -->
+    <section class="hero hero-page" aria-labelledby="page-title">
       <span class="axis" aria-hidden="true"></span>
-
-      <p class="meta fade" style="--d: 120">Based in Argentina</p>
-      <p class="role fade" style="--d: 320">Senior <br>Salesforce Developer</p>
-
-      <p class="name">
-        <span class="row">
-          <span class="line" style="--i: 0"><span class="count" aria-hidden="true">0</span><span class="word">Nicolás</span></span>
-        </span>
-        <span class="row">
-          <span class="line" style="--i: 1"><span class="word">Blanco</span></span>
-          <span class="line" style="--i: 2"><span class="word">Muzzolon</span></span>
-        </span>
-      </p>
-
-      <p class="ghost ghost-l" aria-hidden="true">blanco</p>
-      <p class="ghost ghost-r" aria-hidden="true">muzzo</p>
+      <a class="home-link" href="../">← Nicolás Blanco Muzzolon</a>
+      <h1 class="page-title" id="page-title">Experience</h1>
     </section>
 
     <!-- Motion markup (read by script/script.js):
@@ -94,15 +79,13 @@
          data-rule   a rule drawn out from the axis
          data-node   a node on the axis -->
     <div class="reel" id="content">
-    <a class="back" href="../">← All sections</a>
     <div class="spine">
 
       <!-- EXPERIENCE: on desktop the timeline is built job by job as it goes by -->
       <section id="experience" aria-labelledby="h-exp">
         <div class="screen exp" data-scene="exp">
-          <h2 class="label" id="h-exp"><span data-side>Experience</span></h2>
+          <h2 class="label is-page-title" id="h-exp"><span data-side>Experience</span></h2>
           <div class="body">
-            <p class="lead lead-s" data-lines><span class="js-years">7</span>+ years building on Salesforce, with eight certifications.</p>
             <ol class="jobs">
               <li class="job job-now">
                 <span class="branch" data-rule aria-hidden="true"></span>
@@ -112,7 +95,6 @@
                   <h3 data-lines>Integrations and communication tools</h3>
                   <p class="sub" data-fade>Senior Salesforce Developer</p>
                 </div>
-                <p class="job-text" data-fade>Integrations with external platforms for US enterprise clients, over REST APIs, OAuth and AWS S3. Plus in-house tools that centralize broadcasts and communications inside Salesforce.</p>
               </li>
               <li class="job">
                 <span class="branch" data-rule aria-hidden="true"></span>
@@ -122,7 +104,6 @@
                   <h3 data-lines>Greenfield wealth implementation</h3>
                   <p class="sub" data-fade>Salesforce Developer and Consultant</p>
                 </div>
-                <p class="job-text" data-fade>A Financial Services Cloud org built from the ground up for wealth management: client records, consent and marketing preferences, designed around GDPR and similar data privacy regulations.</p>
               </li>
               <li class="job">
                 <span class="branch" data-rule aria-hidden="true"></span>
@@ -132,7 +113,6 @@
                   <h3 data-lines>Insights feed</h3>
                   <p class="sub" data-fade>Salesforce Developer and Consultant</p>
                 </div>
-                <p class="job-text" data-fade>A custom social-style feed in LWC that surfaced key account insights to asset management associates, backed by Apex services that pulled the relevant data together across the org.</p>
               </li>
               <li class="job">
                 <span class="branch" data-rule aria-hidden="true"></span>
@@ -142,7 +122,6 @@
                   <h3 data-lines>KPI portal</h3>
                   <p class="sub" data-fade>Salesforce Developer and Consultant</p>
                 </div>
-                <p class="job-text" data-fade>An Experience Cloud site built from scratch to deliver KPI dashboards from Tableau CRM, with the access and sharing model to match.</p>
               </li>
               <li class="job">
                 <span class="branch" data-rule aria-hidden="true"></span>
@@ -152,7 +131,6 @@
                   <h3 data-lines>Lightning migration</h3>
                   <p class="sub" data-fade>Salesforce Developer</p>
                 </div>
-                <p class="job-text" data-fade>Moved an enterprise solution from Classic to Lightning: data model analysis and redesign, new LWC interfaces and integrations.</p>
               </li>
               <li class="job">
                 <span class="branch" data-rule aria-hidden="true"></span>
@@ -162,7 +140,6 @@
                   <h3 data-lines>First steps</h3>
                   <p class="sub" data-fade>Salesforce Developer</p>
                 </div>
-                <p class="job-text" data-fade>Apex, Visualforce and LWC on a large internal enterprise project, with a focus on bug analysis and fixes.</p>
               </li>
             </ol>
           </div>
