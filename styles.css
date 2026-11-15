@@ -1,8 +1,8 @@
 /* ==========================================================================
    blancomuzzo.github.io
    One vertical axis runs the whole page. Labels sit flush right against it,
-   content sits flush left of it. The page moves one screen at a time, and
-   each screen is assembled by the scroll that brings it in.
+   content sits flush left of it. Motion lives in script/script.js; this file
+   holds the layout, the resting states and the masks the motion runs through.
    ========================================================================== */
 
 /* ---------- tokens ---------- */
@@ -20,7 +20,7 @@
   --gap: clamp(0.875rem, 1.5vw, 1.5rem);    /* air on each side of the axis */
   --axis: calc(var(--pad) + var(--left));   /* x position of the axis */
 
-  --narrow: 84%;                            /* width axis for display type */
+  --serif: "EB Garamond", Garamond, "Times New Roman", serif;  /* display type */
   --display: clamp(3.25rem, 9vw, 10.5rem);  /* the name */
   --mega: clamp(3rem, 8.6vw, 10rem);        /* project names */
   --title: clamp(2.125rem, 4.3vw, 4.75rem); /* one statement per screen */
@@ -31,8 +31,10 @@
   --text: 1.0625rem;
   --small: 0.9375rem;
 
+  --screen-top: clamp(5.5rem, 15vh, 9rem);
+  --screen-bottom: clamp(2.5rem, 7vh, 4.5rem);
   --row-pad: clamp(1rem, 2.4vh, 1.6rem);
-  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);    /* CSS twin of GSAP's power4.out */
 }
 
 /* Alternative palettes. Preview with ?theme=<name> in the URL, or set
@@ -50,6 +52,11 @@ html {
   scroll-behavior: smooth;
   background: var(--paper);
 }
+
+/* Lenis drives the scroll when it is running. */
+html.lenis, html.lenis body { height: auto; }
+.lenis.lenis-smooth { scroll-behavior: auto !important; }
+.lenis.lenis-stopped { overflow: hidden; }
 
 body {
   margin: 0;
@@ -141,7 +148,7 @@ a { color: inherit; text-decoration: none; }
   min-height: 100vh;
   min-height: 100svh;
   padding: 8rem var(--pad) calc(var(--ghost-size) * 1.15 + 12vh);
-  scroll-snap-align: start;
+  overflow: hidden;
 }
 
 .axis {
@@ -178,10 +185,7 @@ a { color: inherit; text-decoration: none; }
 .name {
   padding-left: var(--gap);
   font-size: var(--display);
-  font-weight: 700;
-  font-stretch: var(--narrow);
-  line-height: 0.9;
-  letter-spacing: -0.04em;
+  line-height: 0.88;
 }
 .name .row { display: block; }
 
@@ -214,10 +218,7 @@ a { color: inherit; text-decoration: none; }
   position: absolute;
   bottom: var(--pad);
   font-size: var(--ghost-size);
-  font-weight: 700;
-  font-stretch: var(--narrow);
   line-height: 0.8;
-  letter-spacing: -0.04em;
   color: var(--ghost);
   pointer-events: none;
   user-select: none;
@@ -230,7 +231,8 @@ a { color: inherit; text-decoration: none; }
 
 /* ---------- load sequence ----------
    is-loading: only the axis and the counter show. script.js grows the axis as
-   the counter climbs, then swaps the class for is-ready and the rest arrives. */
+   the counter climbs, then swaps the class for is-ready and the rest arrives.
+   intro-done hands the hero over to the scroll motion. */
 .is-loading .count,
 .is-ready .count { display: block; }
 .is-ready .count { transform: translateY(-130%); }
@@ -240,43 +242,35 @@ a { color: inherit; text-decoration: none; }
 .is-loading .fade { opacity: 0; transition: none; }
 .is-loading .ghost { opacity: 0; transform: translateY(40%); transition: none; }
 
-/* ---------- scroll assembly ----------
-   script.js gives every piece a --t from 0 (away) to 1 (in place), driven by
-   how far its screen has scrolled in. Without script, --t stays 1. */
-.js-motion [data-r],
-.js-motion .ln-in { --t: 0; }
-.js-motion [data-split]:not(.is-split) { visibility: hidden; }
+.intro-done .word,
+.intro-done .ghost,
+.intro-done .hero .fade { transition: none; }
 
-/* Text revealed line by line: each line rises out of its own mask. */
+/* ---------- motion hooks ----------
+   Until script.js has set every starting state, the pieces it will move stay
+   hidden. If it never gets there, the failsafe in <head> drops js-motion and
+   everything shows in place. */
+.js-motion:not(.motion-on) :is([data-lines], [data-words], [data-fade], [data-side], [data-rule], [data-node]) {
+  visibility: hidden;
+}
+
+/* Text split into lines: each line rises out of its own mask. */
 .ln {
   display: block;
   overflow: hidden;
-  padding: 0.14em 0.08em 0.16em 0;
-  margin: -0.14em -0.08em -0.16em 0;
+  padding: 0.14em 0.08em 0.18em 0;
+  margin: -0.14em -0.08em -0.18em 0;
 }
 .ln-in {
   display: block;
   white-space: nowrap;
-  transform: translate3d(0, calc((1 - var(--t, 1)) * 125%), 0);
 }
 
-[data-r="up"] {
-  opacity: var(--t, 1);
-  transform: translate3d(0, calc((1 - var(--t, 1)) * 1.5rem), 0);
-}
+/* Text split into words for the scroll-lit reveal. */
+.w { display: inline-block; }
 
-/* Labels slide out from behind the axis. Their parent is the mask. */
-[data-r="side"] {
-  display: block;
-  transform: translate3d(calc((1 - var(--t, 1)) * 105%), 0, 0);
-}
-
-[data-r="rule"] {
-  transform: scaleX(var(--t, 1));
-  transform-origin: left;
-}
-
-[data-r="node"] { transform: scale(var(--t, 1)); }
+[data-side] { display: block; }
+[data-rule] { transform-origin: left; }
 
 /* ---------- screens on the axis ---------- */
 .spine { position: relative; }
@@ -297,13 +291,13 @@ a { color: inherit; text-decoration: none; }
   grid-template-columns: var(--left) minmax(0, 1fr);
   min-height: 100vh;
   min-height: 100svh;
-  padding: clamp(5.5rem, 15vh, 9rem) var(--pad) clamp(2.5rem, 7vh, 4.5rem);
-  scroll-snap-align: start;
+  padding: var(--screen-top) var(--pad) var(--screen-bottom);
 }
 .project { --first: var(--mega); }
 .exp { --first: var(--title-s); }
 .certs-screen { --first: var(--list-xl); }
 
+/* The label is also the mask its text slides out of. */
 .label {
   grid-column: 1;
   align-self: start;
@@ -331,10 +325,6 @@ a { color: inherit; text-decoration: none; }
 .lead {
   max-width: 17em;
   font-size: var(--title);
-  font-weight: 650;
-  font-stretch: var(--narrow);
-  line-height: 0.98;
-  letter-spacing: -0.035em;
   text-wrap: balance;
 }
 .lead-s {
@@ -351,10 +341,7 @@ a { color: inherit; text-decoration: none; }
 .stack {
   max-width: 18em;
   font-size: var(--title);
-  font-weight: 500;
-  font-stretch: var(--narrow);
   line-height: 1;
-  letter-spacing: -0.035em;
 }
 
 .sub {
@@ -384,8 +371,6 @@ a { color: inherit; text-decoration: none; }
   padding: 0.85rem 0;
   border-top: 1px solid var(--rule);
   font-size: clamp(1.125rem, 1.6vw, 1.5rem);
-  font-weight: 600;
-  letter-spacing: -0.02em;
   transition: padding-left 0.4s var(--ease);
 }
 .index li:last-child a { border-bottom: 1px solid var(--rule); }
@@ -394,17 +379,13 @@ a { color: inherit; text-decoration: none; }
 .index-state {
   color: var(--mute);
   font-size: var(--small);
-  font-weight: 400;
   letter-spacing: -0.01em;
   white-space: nowrap;
 }
 
 .mega {
   font-size: var(--mega);
-  font-weight: 700;
-  font-stretch: var(--narrow);
   line-height: 0.9;
-  letter-spacing: -0.045em;
 }
 .project .sub { margin-top: 1rem; }
 
@@ -432,6 +413,82 @@ a { color: inherit; text-decoration: none; }
 .project-next .mega,
 .project-next .p-text { color: var(--mute); }
 
+/* Horizontal scene (desktop, set by script.js): the section holds the screen
+   while its panels travel right to left and disappear behind the axis. */
+.hscene.is-h {
+  position: relative;
+  height: 100vh;
+  height: 100svh;
+  overflow: hidden;
+}
+.hscene.is-h .hscene-window {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(var(--axis) + 1px);
+  right: 0;
+  overflow: hidden;
+}
+.hscene.is-h .hscene-track {
+  display: flex;
+  height: 100%;
+  will-change: transform;
+}
+.hscene.is-h .panel {
+  flex: 0 0 100%;
+  display: flex;
+  min-height: 0;
+  height: 100%;
+  padding: var(--screen-top) var(--pad) var(--screen-bottom) 0;
+}
+.hscene.is-h .panel > .label { display: none; }
+.hscene.is-h .panel > .body {
+  flex: 1;
+  padding-left: calc(var(--gap) - 1px);
+}
+
+/* The labels column stays put and swaps its label as each panel arrives. */
+.hscene-labels {
+  position: absolute;
+  top: var(--screen-top);
+  left: var(--pad);
+  width: var(--left);
+  font-size: var(--small);
+  font-weight: 500;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+}
+.hscene-labels > span {
+  position: absolute;
+  right: var(--gap);
+  overflow: hidden;
+  white-space: nowrap;
+}
+.hscene-labels > span > span {
+  display: block;
+  transform: translateY(110%);
+  transition: transform 0.6s var(--ease);
+}
+.hscene-labels > span.is-on > span { transform: none; }
+.hscene-labels > span.is-past > span { transform: translateY(-110%); }
+
+/* Progress through the projects, drawn along the bottom of the window. */
+.hscene-bar {
+  position: absolute;
+  left: calc(var(--axis) + var(--gap));
+  right: var(--pad);
+  bottom: 1.5rem;
+  height: 1px;
+  background: var(--rule);
+}
+.hscene-bar > span {
+  position: absolute;
+  inset: 0;
+  background: var(--ink);
+  transform: scaleX(0);
+  transform-origin: left;
+}
+
 /* ---------- experience ---------- */
 /* A label hung on the left side of the axis, flush against it. Also a mask. */
 .side {
@@ -458,9 +515,7 @@ a { color: inherit; text-decoration: none; }
 .job .side { top: calc(var(--row-pad) + var(--head) * 0.3); }
 .job h3 {
   font-size: var(--head);
-  font-weight: 700;
   line-height: 1.05;
-  letter-spacing: -0.03em;
 }
 .job .sub { margin-top: 0.3rem; }
 .job-text { max-width: 34rem; }
@@ -493,10 +548,7 @@ a { color: inherit; text-decoration: none; }
 
 .certs {
   font-size: var(--list-xl);
-  font-weight: 650;
-  font-stretch: var(--narrow);
-  line-height: 1.02;
-  letter-spacing: -0.035em;
+  line-height: 1;
 }
 .certs .minor { color: var(--mute); }
 
@@ -517,10 +569,7 @@ a { color: inherit; text-decoration: none; }
 .link-name {
   display: block;
   font-size: clamp(2rem, 5.4vw, 5.75rem);
-  font-weight: 700;
-  font-stretch: var(--narrow);
   line-height: 0.95;
-  letter-spacing: -0.04em;
 }
 .link-handle {
   color: var(--mute);
@@ -543,7 +592,7 @@ a { color: inherit; text-decoration: none; }
   align-items: end;
   row-gap: clamp(2rem, 6vh, 4rem);
   padding: clamp(4rem, 14vh, 8rem) var(--pad) var(--pad);
-  scroll-snap-align: end;
+  overflow: hidden;
 }
 .foot-note {
   font-size: var(--small);
@@ -554,17 +603,29 @@ a { color: inherit; text-decoration: none; }
 .foot-note-r { text-align: right; }
 .foot-word {
   font-size: var(--ghost-size);
-  font-weight: 700;
-  font-stretch: var(--narrow);
   line-height: 0.8;
-  letter-spacing: -0.04em;
   user-select: none;
 }
 .foot-word-r { justify-self: end; }
 
-/* ---------- one screen per scroll on desktop ---------- */
-@media (min-width: 53.01rem) and (min-height: 34rem) {
-  html { scroll-snap-type: y mandatory; }
+/* ---------- display face ----------
+   Everything large is set in the serif; small text stays in Mona Sans.
+   Swap --serif at the top to try another face. */
+.name, .ghost, .lead, .stack, .mega, .certs, .job h3, .link-name, .foot-word, .index a > span:first-child {
+  font-family: var(--serif);
+  font-variant-numeric: lining-nums;
+}
+.name, .ghost, .mega, .link-name, .foot-word {
+  font-weight: 600;
+  letter-spacing: -0.025em;
+}
+.lead, .certs { font-weight: 500; letter-spacing: -0.015em; line-height: 1; }
+.stack { font-weight: 400; letter-spacing: -0.01em; }
+.job h3 { font-weight: 600; letter-spacing: -0.01em; }
+.index a > span:first-child {
+  font-size: 1.2em;
+  font-weight: 500;
+  letter-spacing: -0.01em;
 }
 
 /* ---------- medium ---------- */
@@ -577,7 +638,7 @@ a { color: inherit; text-decoration: none; }
   .job-text { max-width: 34rem; }
 }
 
-/* ---------- small: the axis moves to the left margin, free scrolling ---------- */
+/* ---------- small: the axis moves to the left margin, no scenes ---------- */
 @media (max-width: 53rem) {
   :root {
     --pad: 1rem;
@@ -641,7 +702,6 @@ a { color: inherit; text-decoration: none; }
     text-align: left;
     color: var(--mute);
   }
-  [data-r="side"] { transform: translate3d(0, calc((1 - var(--t, 1)) * 105%), 0); }
 
   .p-text { gap: 1rem; }
   .job { display: block; }
