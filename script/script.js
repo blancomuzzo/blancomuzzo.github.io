@@ -21,6 +21,23 @@
   const year = document.getElementById("year");
   if (year) year.textContent = new Date().getFullYear();
 
+  // Full years of experience since the career start date (3 January 2019).
+  // Runs before any text is split for motion, so the number is part of the split.
+  const CAREER_START = new Date(2019, 0, 3);
+  const now = new Date();
+  let years = now.getFullYear() - CAREER_START.getFullYear();
+  if (now < new Date(now.getFullYear(), CAREER_START.getMonth(), CAREER_START.getDate())) years--;
+  document.querySelectorAll(".js-years").forEach(el => { el.textContent = years; });
+
+  // Email link, assembled here so the address is not in the HTML.
+  document.querySelectorAll(".js-email").forEach(item => {
+    const address = item.dataset.u + "@" + item.dataset.d;
+    const link = item.querySelector(".link");
+    link.href = "mailto:" + address;
+    link.querySelector(".link-handle").textContent = address;
+    item.hidden = false;
+  });
+
   // Layout depends on the display typeface (line breaks, the name), so wait for
   // it, but never longer than FONT_TIMEOUT.
   const FONT_TIMEOUT = 3000;
@@ -170,6 +187,11 @@
   // Splitting text into masked lines and words
   // ------------------------------------------------------------------------
   function splitLines(el) {
+    if (!el._skills && el.querySelector(".skill")) {
+      el._skills = [...el.querySelectorAll(".skill")].map(s => s.textContent.trim());
+    }
+    if (el._skills) { splitSkills(el, el._skills); return; }
+
     const text = el.dataset.text || (el.dataset.text = el.textContent.replace(/\s+/g, " ").trim());
     const words = text.split(" ");
     el.textContent = "";
@@ -202,6 +224,53 @@
       mask.append(inner);
       el.append(mask);
       if (i < lines.length - 1) el.append(" ");
+    });
+  }
+
+  // Like splitLines, but each skill stays whole (and hoverable): a skill and its
+  // punctuation never break apart, and lines are built from whole skills.
+  function splitSkills(el, skills) {
+    const unit = (name, i) => {
+      const u = document.createElement("span");
+      u.className = "skill-unit";
+      const s = document.createElement("span");
+      s.className = "skill";
+      s.textContent = name;
+      u.append(s, i < skills.length - 1 ? "," : ".");
+      return u;
+    };
+
+    el.textContent = "";
+    const units = skills.map((name, i) => {
+      const u = unit(name, i);
+      el.append(u);
+      if (i < skills.length - 1) el.append(" ");
+      return u;
+    });
+
+    const rows = [];
+    let top = null;
+    units.forEach((u, i) => {
+      if (top === null || Math.abs(u.offsetTop - top) > 2) {
+        rows.push([]);
+        top = u.offsetTop;
+      }
+      rows[rows.length - 1].push(i);
+    });
+
+    el.textContent = "";
+    rows.forEach((row, r) => {
+      const mask = document.createElement("span");
+      mask.className = "ln";
+      const inner = document.createElement("span");
+      inner.className = "ln-in";
+      row.forEach((i, k) => {
+        inner.append(unit(skills[i], i));
+        if (k < row.length - 1) inner.append(" ");
+      });
+      mask.append(inner);
+      el.append(mask);
+      if (r < rows.length - 1) el.append(" ");
     });
   }
 
