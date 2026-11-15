@@ -1,0 +1,3 @@
+# Claude Code local config and skills
+.claude/
+skills-lock.json
