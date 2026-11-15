@@ -5,10 +5,11 @@
 // 2. Smooth scroll (Lenis) that settles on the next section when you let go.
 // 3. Scenes (GSAP ScrollTrigger), desktop:
 //    hero      the name lags and the corner words drift apart as you leave
-//    about     held on screen while the statement lights up word by word
+//    about     the statement lights up word by word as the screen scrolls in
 //    stack     each line slides in from alternating sides into place
 //    projects  held on screen while the panels travel sideways behind the axis
-//    exp       held on screen while the timeline is built job by job
+//    exp       the timeline is built job by job as the screen scrolls in
+//    Every screen is complete by the time it reaches the top: arriving builds it.
 //    certs     lines rise in sequence
 //    foot      the two corner words close in
 //    On phones the held scenes become plain reveals as each piece enters.
@@ -25,11 +26,7 @@
   const FONT_TIMEOUT = 3000;
   const fontsReady = Promise.race([
     document.fonts && document.fonts.load
-      ? Promise.all([
-          document.fonts.load('600 1em "EB Garamond"', "Nicolás 0123456789"),
-          document.fonts.load('500 1em "Mona Sans"'),
-          document.fonts.ready,
-        ])
+      ? Promise.all([document.fonts.load('400 1em "Necto Mono"', "Nicolás 0123456789"), document.fonts.ready])
       : Promise.resolve(),
     new Promise(resolve => setTimeout(resolve, FONT_TIMEOUT)),
   ]).catch(() => {});
@@ -95,7 +92,10 @@
     gsap.ticker.lagSmoothing(0);
 
     lenis.stop();                       // no scrolling during the load sequence
-    introDone.then(() => lenis.start());
+    introDone.then(() => {
+      lenis.start();
+      ScrollTrigger.refresh();
+    });
 
     // When the scroll comes to rest between two sections, finish the trip to the
     // next one in the direction you were going. Inside a held scene any resting
@@ -258,8 +258,20 @@
   const lines = scope => scope.querySelectorAll(".ln-in");
   const mark = (handled, scope, sel) => scope.querySelectorAll(sel).forEach(el => handled.add(el));
 
-  const wordsFrom = () => ({ opacity: M.words.dim, filter: `blur(${M.words.blur}px)`, yPercent: 14 });
-  const wordsTo = extra => ({ opacity: 1, filter: "blur(0px)", yPercent: 0, ease: "none", stagger: M.stagger.words, ...extra });
+  // Words light up through the accent: the edge of what has been read glows blue.
+  const color = name => getComputedStyle(root).getPropertyValue(name).trim();
+  const wordsFrom = () => ({ opacity: M.words.dim, filter: `blur(${M.words.blur}px)`, yPercent: 14, color: color("--accent") });
+  const wordsTo = extra => ({
+    keyframes: {
+      "0%": { opacity: M.words.dim, filter: `blur(${M.words.blur}px)`, yPercent: 14, color: color("--accent") },
+      "55%": { opacity: 1, filter: "blur(0px)", yPercent: 0, color: color("--accent") },
+      "100%": { color: color("--ink") },
+      easeEach: "none",
+    },
+    ease: "none",
+    stagger: M.stagger.words,
+    ...extra,
+  });
 
   // Leaving the hero: the name lags behind the scroll, the corner words part.
   function heroScene() {
@@ -272,8 +284,8 @@
       .to(hero.querySelectorAll(".meta, .role"), { autoAlpha: 0, ease: "none", duration: 0.4 }, 0);
   }
 
-  // About: the screen holds while the statement lights up word by word,
-  // then the two paragraphs arrive.
+  // About: the statement lights up word by word while the screen scrolls in,
+  // then the two paragraphs arrive. All done as the screen reaches the top.
   function aboutScene(handled) {
     const sec = document.querySelector('[data-scene="about"]');
     if (!sec) return;
@@ -282,13 +294,10 @@
     handled.add(lead);
     fades.forEach(el => handled.add(el));
 
-    const tl = gsap.timeline({
-      scrollTrigger: { trigger: sec, start: "top top", end: "+=120%", pin: true, scrub: M.scrub, anticipatePin: 1 },
-    });
-    tl.fromTo(lead.querySelectorAll(".w"), wordsFrom(), wordsTo({ duration: 0.6 }))
-      .fromTo(fades, { autoAlpha: 0, y: M.offset }, { autoAlpha: 1, y: 0, duration: 0.5, stagger: 0.15, ease: M.ease.out }, ">-0.15")
-      .to({}, { duration: 0.35 });
-    holdZone(sec, tl.scrollTrigger);
+    gsap.timeline({ scrollTrigger: { trigger: sec, start: "top 85%", end: "top top", scrub: M.scrub } })
+      .set(lead.querySelectorAll(".w"), wordsFrom(), 0)
+      .to(lead.querySelectorAll(".w"), wordsTo({ duration: 0.6 }), 0)
+      .fromTo(fades, { autoAlpha: 0, y: M.offset }, { autoAlpha: 1, y: 0, duration: 0.35, stagger: 0.1, ease: M.ease.out }, ">-0.2");
   }
 
   // Works with: each line comes in from alternating sides and settles in place.
@@ -411,17 +420,15 @@
     };
   }
 
-  // Experience: the screen holds while each job is drawn: branch, node, years,
-  // name, then the details.
+  // Experience: each job is drawn while the screen scrolls in: branch, node,
+  // years, name, then the details. Complete as the screen reaches the top.
   function expScene(handled) {
     const sec = document.querySelector('[data-scene="exp"]');
     if (!sec) return;
     const jobs = [...sec.querySelectorAll(".job")];
     jobs.forEach(job => mark(handled, job, "[data-rule], [data-node], [data-side], [data-lines], [data-fade]"));
 
-    const tl = gsap.timeline({
-      scrollTrigger: { trigger: sec, start: "top top", end: "+=110%", pin: true, scrub: M.scrub, anticipatePin: 1 },
-    });
+    const tl = gsap.timeline({ scrollTrigger: { trigger: sec, start: "top 70%", end: "top top", scrub: M.scrub } });
     jobs.forEach((job, i) => {
       const at = i * 0.55;
       tl.fromTo(job.querySelector("[data-rule]"), { scaleX: 0 }, { scaleX: 1, duration: 0.7, ease: "power2.out" }, at)
@@ -429,15 +436,6 @@
         .fromTo(job.querySelector("[data-side]"), { xPercent: 105 }, { xPercent: 0, duration: 0.4 }, at + 0.1)
         .fromTo(lines(job), { yPercent: 115 }, { yPercent: 0, duration: 0.45 }, at + 0.15)
         .fromTo(job.querySelectorAll("[data-fade]"), { autoAlpha: 0, y: M.offset }, { autoAlpha: 1, y: 0, duration: 0.4, stagger: 0.08 }, at + 0.25);
-    });
-    tl.to({}, { duration: 0.4 });
-    holdZone(sec, tl.scrollTrigger);
-  }
-
-  function holdZone(sec, st) {
-    sceneZones.push((out, held) => {
-      held.add(sec);
-      out.push([st.start, st.end]);
     });
   }
 
@@ -460,41 +458,61 @@
     gsap.fromTo(r, { xPercent: 70 }, { xPercent: 0, ease: "none", scrollTrigger: { ...st } });
   }
 
-  // Everything no scene took over: revealed once, as it enters.
+  // Everything no scene took over.
+  // Desktop: each screen assembles as one sequence, in reading order, started
+  // by the screen arriving, so nothing waits for its own spot to scroll into view.
+  // Phones: screens are taller than the viewport, so each piece waits for itself.
   function reveals(handled, desktop) {
     const free = sel => gsap.utils.toArray(sel).filter(el => !handled.has(el));
-    const once = trigger => ({ trigger, start: M.start, once: true });
-
-    free("[data-lines]").forEach(el => {
-      gsap.fromTo(lines(el), { yPercent: 115 },
-        { yPercent: 0, duration: M.dur.lines, ease: M.ease.mask, stagger: M.stagger.lines, scrollTrigger: once(el) });
-    });
 
     free("[data-words]").forEach(el => {
-      gsap.fromTo(el.querySelectorAll(".w"), wordsFrom(),
-        wordsTo({ scrollTrigger: { trigger: el, start: "top 88%", end: "bottom 45%", scrub: M.scrub } }));
+      const words = el.querySelectorAll(".w");
+      const screen = desktop && el.closest(".screen");
+      gsap.set(words, wordsFrom());
+      gsap.to(words, wordsTo({
+        scrollTrigger: screen
+          ? { trigger: screen, start: "top 85%", end: "top top", scrub: M.scrub }
+          : { trigger: el, start: "top 88%", end: "bottom 45%", scrub: M.scrub },
+      }));
     });
 
-    free("[data-side]").forEach(el => {
-      gsap.fromTo(el, desktop ? { xPercent: 105 } : { yPercent: 105 },
-        { xPercent: 0, yPercent: 0, scrollTrigger: once(el.parentElement) });
-    });
+    const pieces = free("[data-lines], [data-side], [data-rule], [data-node], [data-fade]");
 
-    free("[data-rule]").forEach(el => {
-      gsap.fromTo(el, { scaleX: 0 }, { scaleX: 1, duration: M.dur.rule, scrollTrigger: once(el.parentElement) });
-    });
+    if (desktop) {
+      const screens = new Map();
+      pieces.forEach(el => {
+        const screen = el.closest(".screen, .foot") || el;
+        if (!screens.has(screen)) screens.set(screen, []);
+        screens.get(screen).push(el);
+      });
+      screens.forEach((els, screen) => {
+        const tl = gsap.timeline({ scrollTrigger: { trigger: screen, start: "top 65%", once: true } });
+        els.forEach((el, i) => {
+          const [targets, from, to] = motionFor(el, true);
+          tl.fromTo(targets, from, to, i * M.stagger.items);
+        });
+      });
+      return;
+    }
 
-    free("[data-node]").forEach(el => {
-      gsap.fromTo(el, { scale: 0 }, { scale: 1, duration: 0.5, scrollTrigger: once(el.parentElement) });
+    pieces.forEach(el => {
+      const [targets, from, to] = motionFor(el, false);
+      const trigger = el.matches("[data-side], [data-rule], [data-node]") ? el.parentElement : el;
+      gsap.fromTo(targets, from, { ...to, scrollTrigger: { trigger, start: M.start, once: true } });
     });
+  }
 
-    const fades = free("[data-fade]");
-    gsap.set(fades, { autoAlpha: 0, y: M.offset });
-    ScrollTrigger.batch(fades, {
-      start: M.start,
-      once: true,
-      onEnter: batch => gsap.to(batch, { autoAlpha: 1, y: 0, stagger: M.stagger.items, overwrite: true }),
-    });
+  // The one motion each kind of piece makes, as [targets, from, to].
+  function motionFor(el, desktop) {
+    if (el.matches("[data-lines]")) {
+      return [lines(el), { yPercent: 115 }, { yPercent: 0, duration: M.dur.lines, ease: M.ease.mask, stagger: M.stagger.lines }];
+    }
+    if (el.matches("[data-side]")) {
+      return [el, desktop ? { xPercent: 105 } : { yPercent: 105 }, { xPercent: 0, yPercent: 0 }];
+    }
+    if (el.matches("[data-rule]")) return [el, { scaleX: 0 }, { scaleX: 1, duration: M.dur.rule }];
+    if (el.matches("[data-node]")) return [el, { scale: 0 }, { scale: 1, duration: 0.5 }];
+    return [el, { autoAlpha: 0, y: M.offset }, { autoAlpha: 1, y: 0 }];
   }
 
   // ------------------------------------------------------------------------
@@ -565,6 +583,7 @@
 
     const update = () => {
       queued = false;
+      root.classList.toggle("scrolled", scrollY > 40);
       const mid = innerHeight * 0.5;
       let id = null;
       for (const s of screens) if (s.getBoundingClientRect().top <= mid) id = s.dataset.nav;
