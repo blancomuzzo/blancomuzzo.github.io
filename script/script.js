@@ -11,8 +11,9 @@
 //    stack     each line slides in from alternating sides into place
 //    exp       the timeline is built job by job as the card goes by
 //    certs     lines rise in sequence
-//    foot      the two corner words close in
 //    Every other card assembles as one sequence as it arrives.
+//    When the wheel stops between two cards, the reel carries on to the next
+//    card in the direction you were going, so no card is left half in view.
 //    On phones the page scrolls normally and pieces reveal as they enter.
 
 (() => {
@@ -154,12 +155,42 @@
     };
     const base = () => (raf ? target : reel.scrollTop);
 
+    // ---- resting points ----
+    // A card rests with its top just under the bar (where links to it land).
+    // A card taller than the screen can rest anywhere from its top to its
+    // bottom, so it can be read through. The very start and end are rests too.
+    const TOP = 0.12;          // share of the viewport above a resting card
+    const BOTTOM = 0.06;       // share below a tall card resting on its bottom
+    const SETTLE = 160;        // ms without wheel or key input before settling
+    let zones = [];
+    let dir = 1;
+    let idle;
+    const settle = () => {
+      if (!onStage() || !zones.length) return;
+      const y = target;
+      if (zones.some(([a, b]) => y >= a - 3 && y <= b + 3)) return;
+      let to = null;
+      if (dir > 0) {
+        const next = zones.find(([a]) => a > y);
+        if (next) to = next[0];
+      } else {
+        for (let i = zones.length - 1; i >= 0; i--) if (zones[i][1] < y) { to = zones[i][1]; break; }
+      }
+      if (to !== null) go(to);
+    };
+    const nudge = (y, d) => {
+      dir = d;
+      go(y);
+      clearTimeout(idle);
+      idle = setTimeout(settle, SETTLE);
+    };
+
     // The wheel anywhere on the page drives the reel.
     addEventListener("wheel", e => {
       if (!onStage() || e.ctrlKey || !e.deltaY) return;   // ctrl + wheel is zoom
       e.preventDefault();
       const unit = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? reel.clientHeight : 1;
-      go(base() + e.deltaY * unit);
+      nudge(base() + e.deltaY * unit, Math.sign(e.deltaY));
     }, { passive: false });
 
     // Keys work wherever the focus is.
@@ -175,7 +206,7 @@
       if (e.key === "End") { e.preventDefault(); go(max()); return; }
       if (!(e.key in moves)) return;
       e.preventDefault();
-      go(base() + moves[e.key]);
+      nudge(base() + moves[e.key], Math.sign(moves[e.key]));
     });
 
     // Links to a card glide there instead of jumping. "#top" goes back to the start.
@@ -187,7 +218,8 @@
       const el = id && document.getElementById(id);
       if (!el || !reel.contains(el)) return;
       e.preventDefault();
-      go(offsetIn(el) - reel.clientHeight * 0.12);
+      clearTimeout(idle);
+      go(offsetIn(el) - reel.clientHeight * TOP);
       if (!el.hasAttribute("tabindex")) el.setAttribute("tabindex", "-1");
       el.focus({ preventScroll: true });
     });
@@ -207,6 +239,15 @@
     let geo = [];
     const measure = () => {
       geo = cards.map(c => ({ c, top: offsetIn(c), h: c.offsetHeight, w: c.offsetWidth }));
+      const vh = reel.clientHeight;
+      const end = max();
+      zones = geo.map(g => {
+        const a = clamp(g.top - vh * TOP, 0, end);
+        const b = clamp(g.top + g.h - vh * (1 - BOTTOM), a, end);
+        return [a, b];
+      });
+      if (zones.length) zones[0][0] = 0;                 // the first card rests from the very top
+      zones.push([end, end]);                            // and the footer at the very end
     };
     const flatten = () => cards.forEach(c => { c.style.transform = ""; c.style.transformOrigin = ""; });
     function update() {
@@ -367,7 +408,6 @@
         introDone.then(() => ctx.add(heroScene));
       }
       certsScene(handled);
-      footScene();
       reveals(handled, desktop);
     });
 
@@ -473,16 +513,6 @@
     list.querySelectorAll("[data-lines]").forEach(el => handled.add(el));
     gsap.fromTo(lines(list), { yPercent: 115 },
       { yPercent: 0, duration: M.dur.lines, ease: M.ease.mask, stagger: 0.07, scrollTrigger: { trigger: list, start: M.start, once: true } });
-  }
-
-  // Footer: the two words close in as the end arrives.
-  function footScene() {
-    const foot = document.querySelector('[data-scene="foot"]');
-    if (!foot) return;
-    const [l, r] = foot.querySelectorAll(".foot-word");
-    const st = { trigger: foot, start: "top bottom", end: "bottom bottom", scrub: M.scrub };
-    gsap.fromTo(l, { xPercent: -70 }, { xPercent: 0, ease: "none", scrollTrigger: st });
-    gsap.fromTo(r, { xPercent: 70 }, { xPercent: 0, ease: "none", scrollTrigger: { ...st } });
   }
 
   // Everything no scene took over.

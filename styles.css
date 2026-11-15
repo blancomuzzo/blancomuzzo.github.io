@@ -516,16 +516,10 @@ a { color: inherit; text-decoration: none; }
   letter-spacing: -0.01em;
 }
 .foot-note-r { text-align: right; }
-.foot-word {
-  font-size: var(--ghost-size);
-  line-height: 0.8;
-  user-select: none;
-}
-.foot-word-r { justify-self: end; }
 
 /* ---------- display sizes ----------
    Large type tightens a little; small text keeps the face's own spacing. */
-.name, .ghost, .mega, .link-name, .foot-word { letter-spacing: -0.03em; }
+.name, .ghost, .mega, .link-name { letter-spacing: -0.03em; }
 .lead, .stack, .certs { letter-spacing: -0.02em; line-height: 1.08; }
 .job h3 { letter-spacing: -0.01em; }
 .index a > span:first-child {
@@ -770,7 +764,6 @@ a { color: inherit; text-decoration: none; }
   }
   .foot-note { grid-column: 1 / -1; }
   .foot-note-r { grid-row: 2; text-align: left; }
-  .foot-word { grid-row: 3; margin-top: 3rem; }
 }
 
 @media (max-width: 53rem) {
