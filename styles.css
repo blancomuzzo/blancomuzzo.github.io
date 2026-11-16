@@ -620,7 +620,7 @@ a { color: inherit; text-decoration: none; }
   letter-spacing: -0.02em;
   transition: color 0.25s ease;
 }
-.next span {
+.next-label {
   color: var(--mute);
   font-size: var(--small);
   letter-spacing: -0.01em;
