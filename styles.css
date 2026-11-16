@@ -435,6 +435,18 @@ a { color: inherit; text-decoration: none; }
 }
 .certs .minor { color: var(--mute); }
 
+/* Certifications and jobs answer the pointer like the skills do. */
+.certs li,
+.job h3,
+.job .side { transition: color 0.35s var(--ease); }
+.node { transition: border-color 0.35s var(--ease); }
+@media (hover: hover) {
+  .certs li:hover,
+  .job:hover h3,
+  .job:hover .side { color: var(--accent); }
+  .job:hover .node { border-color: var(--accent); }
+}
+
 /* ---------- contact ---------- */
 .links { margin: 0 calc(var(--pad) * -1) 0 calc(var(--gap) * -1); }
 .links li { position: relative; }
@@ -471,21 +483,25 @@ a { color: inherit; text-decoration: none; }
 .link:focus-visible .link-handle { color: #ffffff; }
 
 /* ---------- footer ---------- */
+/* Credits left and right, the way on to the next page in the middle. */
 .foot {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: end;
-  row-gap: clamp(2rem, 6vh, 4rem);
-  padding: clamp(4rem, 14vh, 8rem) var(--pad) var(--pad);
-  overflow: hidden;
+  gap: 1rem 2rem;
+  padding: clamp(4rem, 14vh, 8rem) var(--pad) var(--pad) calc(var(--axis) + var(--gap));
 }
 .foot-note {
+  grid-column: 1;
   font-size: var(--small);
   font-weight: 400;
   line-height: 1.25;
   letter-spacing: -0.01em;
 }
-.foot-note-r { text-align: right; }
+.foot-note-r {
+  grid-column: 3;
+  text-align: right;
+}
 
 /* ---------- display sizes ----------
    Large type tightens a little; small text keeps the face's own spacing. */
@@ -558,10 +574,10 @@ a { color: inherit; text-decoration: none; }
 .label.is-page-title { display: none; }
 
 .next {
+  grid-column: 2;
   display: inline-flex;
   align-items: baseline;
   gap: 1rem;
-  margin: 0 var(--pad) clamp(3rem, 10vh, 6rem) calc(var(--pad) + var(--gap));
   font-size: var(--title-s);
   line-height: 1.1;
   letter-spacing: -0.02em;
@@ -658,6 +674,7 @@ a { color: inherit; text-decoration: none; }
   html:not([data-page="home"]) .reel {
     left: calc(var(--axis) - 6px);
     padding-left: 6px;
+    padding-bottom: 7rem;      /* the content can scroll clear of the footer */
   }
   .reel .spine::before { display: none; }
   .reel .screen {
@@ -686,15 +703,12 @@ a { color: inherit; text-decoration: none; }
   }
   .reel .link-name { font-size: clamp(1.75rem, 3.6vw, 3.5rem); }
 
-  .next { margin-left: calc(var(--pad) + var(--left) + var(--gap)); }
-
   /* Home: the title cards. A narrow number column, its own axis, a big title.
      One card per screen: each is --card tall and the next starts a full screen
-     later, so only one is ever in view at rest. The first sits centred at the
-     top of the reel, and the footer fills the space under the last one so it
-     can be centred too. */
+     later, so only one is ever in view at rest. The space above the first and
+     below the last lets both be centred. */
   .reel[data-snap] { --card: 58vh; }
-  .cards { padding: calc((100vh - var(--card)) / 2 - 12vh) var(--pad) 0 calc(var(--gap) * 2); }
+  .cards { padding: calc((100vh - var(--card)) / 2 - 12vh) var(--pad) calc((100vh - var(--card)) / 2) calc(var(--gap) * 2); }
   .card {
     --inset: clamp(1.75rem, 3vw, 2.75rem);
     display: flex;
@@ -731,11 +745,18 @@ a { color: inherit; text-decoration: none; }
   .card:hover,
   .card:focus-visible { border-color: var(--accent); }
 
-  .reel .foot { padding: 4vh var(--pad) var(--pad); }
-  .reel[data-snap] .foot {
-    min-height: calc((100vh - var(--card)) / 2);
-    align-content: end;
+  /* The footer stays on screen over the right side, with no backing. */
+  .foot {
+    position: fixed;
+    left: calc(var(--axis) + 1px);
+    right: 0;
+    bottom: 0;
+    z-index: 3;
+    padding: 1.25rem var(--pad);
+    pointer-events: none;
   }
+  .foot a { pointer-events: auto; }
+  .foot .next { font-size: clamp(1.5rem, 2.2vw, 2.25rem); }
 }
 
 /* ---------- small: the axis moves to the left margin, no scenes ---------- */
@@ -788,17 +809,26 @@ a { color: inherit; text-decoration: none; }
 
   .job { display: block; }
 
+  /* A skill longer than the screen ("Lightning Web Components") may wrap. */
+  .stack .ln-in,
+  .skill-unit { white-space: normal; }
+
   .link {
     flex-direction: column;
     gap: 0.35rem;
   }
 
   .foot {
+    grid-template-columns: minmax(0, 1fr);
     row-gap: 0.35rem;
-    padding-left: calc(var(--pad) + var(--gap));
   }
-  .foot-note { grid-column: 1 / -1; }
-  .foot-note-r { grid-row: 2; text-align: left; }
+  .next {
+    grid-column: 1;
+    grid-row: 1;
+    margin-bottom: 2rem;
+  }
+  .foot-note { grid-column: 1; grid-row: 2; }
+  .foot-note-r { grid-column: 1; grid-row: 3; text-align: left; }
 }
 
 @media (max-width: 53rem) {
