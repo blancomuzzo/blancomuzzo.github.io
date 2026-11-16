@@ -580,8 +580,8 @@ button.link {
 /* ---------- contact ---------- */
 .links { margin: 0 calc(var(--pad) * -1) 0 calc(var(--gap) * -1); }
 .links li { position: relative; }
-.links .branch { left: 0; right: 0; }
-.links .branch-end { top: auto; bottom: 0; }
+/* Contact and projects: rows without dividing lines; the hover block marks the row. */
+.links .branch { display: none; }
 
 .link {
   display: flex;

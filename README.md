@@ -15,4 +15,4 @@ Run locally: `python -m http.server` and open http://localhost:8000
 
 Preview a palette with `?theme=navy` (or `graphite`, `oxblood`, `forest`). To keep one, add `data-theme="navy"` to the `<html>` tag.
 
-GitHub Pages lets browsers keep each file for 10 minutes. Every page links `styles.css` and `script/script.js` with a version (`?v=8.4`): when either file changes, bump that number in all five pages, or a visitor can get the new HTML with the old CSS.
+GitHub Pages lets browsers keep each file for 10 minutes. Every page links `styles.css` and `script/script.js` with a version (`?v=8.5`): when either file changes, bump that number in all five pages, or a visitor can get the new HTML with the old CSS.
