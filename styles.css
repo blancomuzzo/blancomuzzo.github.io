@@ -28,7 +28,7 @@
   --mute: #6b6b6b;
   --ghost: #ecebe5;    /* the dim corner words */
   --rule: #dcdbd4;     /* hairlines */
-  --accent: #2b2bff;   /* blue: what is current, what you touch, what is moving.
+  --accent: #0000ff;   /* blue: what is current, what you touch, what is moving.
                           Passes contrast on the white ground at any size. */
   color-scheme: light;
 
