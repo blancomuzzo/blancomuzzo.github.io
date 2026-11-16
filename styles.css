@@ -527,8 +527,14 @@ a { color: inherit; text-decoration: none; }
 .jobs:not(.is-focused) .job:has(.job-open:focus-visible)::before { opacity: 1; }
 .jobs:not(.is-focused) .job:hover :is(h3, .sub, .side),
 .jobs:not(.is-focused) .job:has(.job-open:focus-visible) :is(h3, .sub, .side) { color: #ffffff; }
-/* The open job keeps its title in blue. */
-.job.is-open h3 { color: var(--accent); }
+/* The open job: title, years and node in blue. A click anywhere on it closes it. */
+.job.is-open h3,
+.job.is-open .side { color: var(--accent); }
+.job.is-open .node {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+[data-focus-item].is-open { cursor: pointer; }
 
 /* Projects: the contact rows, as buttons. */
 button.link {
@@ -542,6 +548,8 @@ button.link {
   cursor: pointer;
 }
 .projects .is-open > .link { color: var(--accent); }
+.projects .is-open > .link:hover,
+.projects .is-open > .link:focus-visible { color: #ffffff; }
 
 /* The detail: what the work was, then the skills it used, then the way back. */
 .detail {
@@ -567,19 +575,6 @@ button.link {
   font-size: var(--small);
   line-height: 1.3;
 }
-.detail-close {
-  margin: 1.5rem 0 0.5rem;
-  padding: 0;
-  border: 0;
-  background: none;
-  color: var(--mute);
-  font: inherit;
-  font-size: var(--small);
-  cursor: pointer;
-  transition: color 0.25s ease;
-}
-.detail-close:hover,
-.detail-close:focus-visible { color: var(--accent); }
 .projects .detail { padding: 0 var(--pad) 1rem var(--gap); }
 
 /* ---------- contact ---------- */
@@ -628,6 +623,7 @@ button.link {
 }
 .foot-note {
   grid-column: 1;
+  white-space: nowrap;
   font-size: var(--small);
   font-weight: 400;
   line-height: 1.25;
@@ -704,9 +700,28 @@ button.link {
 /* The title on the left names the page, so a section label that only repeats it goes. */
 .label.is-page-title { display: none; }
 
-.next {
+/* The way back (only while a row is open) and the way on. */
+.foot-nav {
   grid-column: 2;
   justify-self: end;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.75rem 2rem;
+}
+.foot-back {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--mute);
+  font: inherit;
+  font-size: var(--small);
+  cursor: pointer;
+  transition: color 0.25s ease;
+}
+.foot-back:hover,
+.foot-back:focus-visible { color: var(--accent); }
+.next {
   display: inline-flex;
   align-items: baseline;
   gap: 1rem;
@@ -736,8 +751,7 @@ button.link {
     --left: min(34vw, 34rem);
     --display: calc(var(--left) / 6.4);
   }
-  /* Inner pages: a narrower left column, so the content has the room. */
-  html:not([data-page="home"]) { --left: min(24vw, 22rem); }
+
   html,
   body {
     height: 100%;
@@ -902,8 +916,10 @@ button.link {
     padding: 1.25rem var(--pad);
     pointer-events: none;
   }
-  .foot a { pointer-events: auto; }
+  .foot a,
+  .foot button { pointer-events: auto; }
   .foot .next { font-size: clamp(1.5rem, 2.2vw, 2.25rem); }
+  .foot .next.is-item { font-size: clamp(1.25rem, 1.7vw, 1.75rem); }   /* a row's name, not a page's */
 }
 
 /* ---------- small: the axis moves to the left margin, no scenes ---------- */
@@ -971,7 +987,7 @@ button.link {
     grid-template-columns: minmax(0, 1fr);
     row-gap: 0.35rem;
   }
-  .next {
+  .foot-nav {
     grid-column: 1;
     grid-row: 1;
     justify-self: start;

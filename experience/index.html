@@ -40,13 +40,13 @@
   <link rel="preload" href="../fonts/necto-mono-regular.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="icon" href="../favicon.svg" type="image/svg+xml">
   <!-- ?v= forces browsers to fetch the new file after a change: bump it on every release, in all five pages. -->
-  <link rel="stylesheet" href="../styles.css?v=8.3">
+  <link rel="stylesheet" href="../styles.css?v=8.4">
 
   <!-- Motion: GSAP + ScrollTrigger for the scenes. If they fail to load, the page
        stays fully readable without motion. -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
-  <script src="../script/script.js?v=8.3" defer></script>
+  <script src="../script/script.js?v=8.4" defer></script>
 </head>
 <body>
   <a class="skip" href="#content">Skip to content</a>
@@ -100,7 +100,6 @@
                 <div class="detail" id="job-2026" hidden>
                   <p class="detail-text">Integrations with external platforms for US enterprise clients, over REST APIs, OAuth and AWS S3. Plus in-house tools that centralize broadcasts and communications inside Salesforce.</p>
                   <ul class="tags"><li>REST APIs</li><li>OAuth 2.0</li><li>AWS S3</li></ul>
-                  <button class="detail-close" type="button" data-focus-close>← All experience</button>
                 </div>
               </li>
               <li class="job" data-focus-item>
@@ -114,7 +113,6 @@
                 <div class="detail" id="job-2024" hidden>
                   <p class="detail-text">A Financial Services Cloud org built from the ground up for wealth management: client records, consent and marketing preferences, designed around GDPR and similar data privacy regulations.</p>
                   <ul class="tags"><li>Financial Services Cloud</li><li>Data modeling</li><li>GDPR</li></ul>
-                  <button class="detail-close" type="button" data-focus-close>← All experience</button>
                 </div>
               </li>
               <li class="job" data-focus-item>
@@ -128,7 +126,6 @@
                 <div class="detail" id="job-2022" hidden>
                   <p class="detail-text">A custom social-style feed in LWC that surfaced key account insights to asset management associates, backed by Apex services that pulled the relevant data together across the org.</p>
                   <ul class="tags"><li>Lightning Web Components</li><li>Apex</li></ul>
-                  <button class="detail-close" type="button" data-focus-close>← All experience</button>
                 </div>
               </li>
               <li class="job" data-focus-item>
@@ -142,7 +139,6 @@
                 <div class="detail" id="job-2021" hidden>
                   <p class="detail-text">An Experience Cloud site built from scratch to deliver KPI dashboards from Tableau CRM, with the access and sharing model to match.</p>
                   <ul class="tags"><li>Experience Cloud</li><li>Tableau CRM</li><li>Sharing and visibility</li></ul>
-                  <button class="detail-close" type="button" data-focus-close>← All experience</button>
                 </div>
               </li>
               <li class="job" data-focus-item>
@@ -156,7 +152,6 @@
                 <div class="detail" id="job-2020" hidden>
                   <p class="detail-text">Moved an enterprise solution from Classic to Lightning: data model analysis and redesign, new LWC interfaces and integrations.</p>
                   <ul class="tags"><li>Lightning Web Components</li><li>Data modeling</li><li>Integrations</li></ul>
-                  <button class="detail-close" type="button" data-focus-close>← All experience</button>
                 </div>
               </li>
               <li class="job" data-focus-item>
@@ -170,7 +165,6 @@
                 <div class="detail" id="job-2019" hidden>
                   <p class="detail-text">Apex, Visualforce and LWC on a large internal enterprise project, with a focus on bug analysis and fixes.</p>
                   <ul class="tags"><li>Apex</li><li>Visualforce</li><li>Lightning Web Components</li></ul>
-                  <button class="detail-close" type="button" data-focus-close>← All experience</button>
                 </div>
               </li>
             </ol>
@@ -185,7 +179,10 @@
     <!-- Fixed to the bottom on desktop, over the content; at the end of the page on phones. -->
     <footer class="foot">
       <p class="foot-note">© <span id="year">2026</span> Nicolás Blanco Muzzolon</p>
-      <a class="next" href="../contact/"><span class="next-label">Next</span> Contact →</a>
+      <div class="foot-nav">
+        <button class="foot-back" type="button" data-focus-back hidden>← All experience</button>
+        <a class="next" href="../contact/"><span class="next-label">Next</span> Contact →</a>
+      </div>
     </footer>
   </main>
 </body>

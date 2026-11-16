@@ -40,13 +40,13 @@
   <link rel="preload" href="../fonts/necto-mono-regular.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="icon" href="../favicon.svg" type="image/svg+xml">
   <!-- ?v= forces browsers to fetch the new file after a change: bump it on every release, in all five pages. -->
-  <link rel="stylesheet" href="../styles.css?v=8.3">
+  <link rel="stylesheet" href="../styles.css?v=8.4">
 
   <!-- Motion: GSAP + ScrollTrigger for the scenes. If they fail to load, the page
        stays fully readable without motion. -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
-  <script src="../script/script.js?v=8.3" defer></script>
+  <script src="../script/script.js?v=8.4" defer></script>
 </head>
 <body>
   <a class="skip" href="#content">Skip to content</a>
@@ -97,7 +97,6 @@
               <div class="detail" id="p-flex" hidden>
                 <p class="detail-text">An async job dispatcher that queues work beyond the Apex flex queue limit and feeds it to the platform as slots free up, so batch-heavy orgs stop failing with “too many jobs”.</p>
                 <ul class="tags"><li>Apex</li><li>Async Apex</li></ul>
-                <button class="detail-close" type="button" data-focus-close>← All projects</button>
               </div>
             </li>
             <li data-focus-item>
@@ -109,7 +108,6 @@
               <div class="detail" id="p-relay" hidden>
                 <p class="detail-text">A backend relay that routes Apex-originated email through an external provider, so an org can send at volume past its native email limits. Emails sent from the UI stay native.</p>
                 <ul class="tags"><li>Apex</li><li>REST APIs</li></ul>
-                <button class="detail-close" type="button" data-focus-close>← All projects</button>
               </div>
               <span class="branch branch-end" data-rule aria-hidden="true"></span>
             </li>
@@ -124,7 +122,10 @@
     <!-- Fixed to the bottom on desktop, over the content; at the end of the page on phones. -->
     <footer class="foot">
       <p class="foot-note">© <span id="year">2026</span> Nicolás Blanco Muzzolon</p>
-      <a class="next" href="../experience/"><span class="next-label">Next</span> Experience →</a>
+      <div class="foot-nav">
+        <button class="foot-back" type="button" data-focus-back hidden>← All projects</button>
+        <a class="next" href="../experience/"><span class="next-label">Next</span> Experience →</a>
+      </div>
     </footer>
   </main>
 </body>

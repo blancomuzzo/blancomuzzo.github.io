@@ -288,13 +288,32 @@
   // ------------------------------------------------------------------------
   // Openable rows: projects and jobs ([data-focus] lists)
   // ------------------------------------------------------------------------
-  // Opening a row sweeps the other rows out to the side, one after another
-  // from the opened one outward (the timeline's nodes go with them), folds the
-  // space they took, then opens the detail: the text rises and the skills slide
-  // in one by one. Closing (the row again, "All …", or Escape) plays it back.
+  // Opening a row sweeps all the other rows out to the side at once (the
+  // timeline's nodes go with them), folds the space they took, then opens the
+  // detail: the text rises and the skills slide in one by one.
+  // While a row is open, the footer offers the way back ("← All …") and its
+  // Next opens the following row; from the last row, Next goes to the next page.
+  // A click anywhere on the open row, the way back, or Escape closes it.
   // Without GSAP, or with reduced motion, the same happens without the motion.
   function setupFocus() {
     const refresh = () => { if (window.ScrollTrigger) window.ScrollTrigger.refresh(); };
+    const back = document.querySelector("[data-focus-back]");
+    const next = document.querySelector(".foot .next");
+    const nextHref = next && next.getAttribute("href");
+    const nextLabel = next && next.lastChild.textContent.replace("→", "").trim();
+
+    // Rewrite the footer's Next: "Next <label> →", its letters ready to roll.
+    const setNext = (label, item) => {
+      if (!next) return;
+      next.classList.toggle("is-item", item);
+      next.textContent = "";
+      const tag = document.createElement("span");
+      tag.className = "next-label";
+      tag.textContent = "Next";
+      next.append(tag, ` ${label} →`);
+      delete next.dataset.roll;
+      if (motion) rollText(next);
+    };
 
     document.querySelectorAll("[data-focus]").forEach(list => {
       const items = [...list.children].filter(el => el.matches("[data-focus-item]"));
@@ -302,7 +321,27 @@
         button: item.querySelector("[data-focus-open]"),
         detail: item.querySelector(".detail"),
       });
+      // What Next calls a row: a job by its years (short, and it is a timeline),
+      // a project by its name.
+      items.forEach(item => {
+        const years = item.querySelector(".side");
+        item.dataset.title = (years || parts(item).button).textContent.replace(/\s+/g, " ").trim();
+      });
       let open = null;   // { item, tl }
+      let busy = false;  // a sweep is running
+
+      const footer = item => {
+        const after = item && items[items.indexOf(item) + 1];
+        if (back) back.hidden = !item;
+        if (!next) return;
+        if (after) {
+          next.setAttribute("href", "#" + parts(after).detail.id);
+          setNext(after.dataset.title, true);
+        } else {
+          next.setAttribute("href", nextHref);
+          setNext(nextLabel, false);
+        }
+      };
 
       const show = item => {
         const { button, detail } = parts(item);
@@ -310,6 +349,7 @@
         list.classList.add("is-focused");
         item.classList.add("is-open");
         button.setAttribute("aria-expanded", "true");
+        footer(item);
 
         const gsap = window.gsap;
         if (!motion || !gsap) {
@@ -318,22 +358,18 @@
           open = { item, tl: null };
           return;
         }
-        const at = items.indexOf(item);
-        const tl = gsap.timeline({ defaults: { ease: "power3.inOut" }, onComplete: refresh })
-          .to(others, {
-            xPercent: 110, autoAlpha: 0, duration: 0.5,
-            stagger: (i, el) => (Math.abs(items.indexOf(el) - at) - 1) * 0.06,
-          })
-          .to(others, { height: 0, paddingTop: 0, paddingBottom: 0, marginTop: 0, marginBottom: 0, duration: 0.45 }, "-=0.15")
+        busy = true;
+        const tl = gsap.timeline({ onComplete: () => { busy = false; refresh(); } })
+          .to(others, { xPercent: 120, autoAlpha: 0, duration: 0.32, ease: "power4.in" })
+          .to(others, { height: 0, paddingTop: 0, paddingBottom: 0, marginTop: 0, marginBottom: 0, duration: 0.3, ease: "power3.inOut" }, "-=0.05")
           .add(() => { detail.hidden = false; })
-          .fromTo(detail, { height: 0 }, { height: "auto", duration: 0.5, ease: "power3.out" })
-          .fromTo(detail.querySelector(".detail-text"), { y: 16, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 0.5, ease: "power3.out" }, "<0.1")
-          .fromTo(detail.querySelectorAll(".tags li"), { x: -24, autoAlpha: 0 }, { x: 0, autoAlpha: 1, duration: 0.4, stagger: 0.07, ease: "power3.out" }, "<0.15")
-          .fromTo(detail.querySelector(".detail-close"), { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.3 }, "<0.2");
+          .fromTo(detail, { height: 0 }, { height: "auto", duration: 0.4, ease: "power4.out" })
+          .fromTo(detail.querySelector(".detail-text"), { y: 16, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 0.4, ease: "power3.out" }, "<0.05")
+          .fromTo(detail.querySelectorAll(".tags li"), { x: -24, autoAlpha: 0 }, { x: 0, autoAlpha: 1, duration: 0.35, stagger: 0.05, ease: "power3.out" }, "<0.1");
         open = { item, tl };
       };
 
-      const hide = () => {
+      const hide = then => {
         if (!open) return;
         const { item, tl } = open;
         const { button, detail } = parts(item);
@@ -343,35 +379,55 @@
           others.forEach(el => { el.hidden = false; });
           if (tl) {
             tl.kill();
-            window.gsap.set([...others, detail, ...detail.querySelectorAll(".detail-text, .tags li, .detail-close")], { clearProps: "all" });
+            window.gsap.set([...others, detail, ...detail.querySelectorAll(".detail-text, .tags li")], { clearProps: "all" });
           }
           list.classList.remove("is-focused");
           item.classList.remove("is-open");
           button.setAttribute("aria-expanded", "false");
           open = null;
-          refresh();
+          busy = false;
+          if (then) then();
+          else { footer(null); refresh(); }
         };
         if (!tl) { done(); return; }
+        busy = true;
         tl.eventCallback("onComplete", null);
         tl.eventCallback("onReverseComplete", done);
-        tl.timeScale(1.4).reverse();
+        tl.timeScale(1.8).reverse();
       };
 
+      // A click anywhere on the open row closes it; on a closed row, opens it.
       list.addEventListener("click", e => {
-        const close = e.target.closest("[data-focus-close]");
-        if (close) {
-          const was = open && open.item;
+        if (busy) return;
+        if (open && open.item.contains(e.target)) {
+          const was = open.item;
           hide();
-          if (was) parts(was).button.focus({ preventScroll: true });
+          parts(was).button.focus({ preventScroll: true });
           return;
         }
         const opener = e.target.closest("[data-focus-open]");
-        if (!opener) return;
-        const item = opener.closest("[data-focus-item]");
-        if (open) { if (open.item === item) hide(); return; }
-        show(item);
+        if (!opener || open) return;
+        show(opener.closest("[data-focus-item]"));
       });
-      addEventListener("keydown", e => { if (e.key === "Escape" && open) hide(); });
+
+      if (back) back.addEventListener("click", () => {
+        if (busy || !open) return;
+        const was = open.item;
+        hide();
+        parts(was).button.focus({ preventScroll: true });
+      });
+
+      // Next, while a row is open: the following row, if there is one.
+      if (next) next.addEventListener("click", e => {
+        if (!open) return;
+        const after = items[items.indexOf(open.item) + 1];
+        if (!after) return;            // the last row: on to the next page
+        e.preventDefault();
+        if (busy) return;
+        hide(() => show(after));
+      });
+
+      addEventListener("keydown", e => { if (e.key === "Escape" && open && !busy) hide(); });
     });
   }
 
