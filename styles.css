@@ -90,6 +90,7 @@ body {
 h1, h2, h3, p, ul, ol { margin: 0; font-size: inherit; font-weight: inherit; }
 ul, ol { padding: 0; list-style: none; }
 a { color: inherit; text-decoration: none; }
+[hidden] { display: none !important; }   /* wins over any display a rule gives it */
 
 ::selection { background: var(--accent); color: #ffffff; }
 
@@ -143,27 +144,27 @@ a { color: inherit; text-decoration: none; }
   display: flex;
   gap: clamp(0.75rem, 2vw, 2rem);
 }
-.nav a { position: relative; }
-.nav a::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: -0.2em;
-  height: 2px;
-  background: var(--accent);
-  transform: scaleX(0);
-  transform-origin: left;
-  transition: transform 0.4s var(--ease);
+/* Like the contact rows: a blue block with white letters. The current page is
+   written in blue. */
+.nav a {
+  padding: 0.2em 0.45em;
+  margin: -0.2em -0.45em;
+  transition: background-color 0.25s ease, color 0.25s ease;
 }
-.nav a:focus-visible::after,
-.nav a[aria-current]::after { transform: scaleX(1); }
+.nav a[aria-current] { color: var(--accent); }
+.nav a:hover,
+.nav a:focus-visible {
+  background: var(--accent);
+  color: #ffffff;
+  outline-color: #ffffff;
+  outline-offset: -3px;
+}
 
 /* ---------- letters that roll on hover ----------
    script.js splits the links' text into letters (.ch), each a clipped slot.
    A copy of each letter sits 2em below it as a text shadow; on hover the
    letters move up 2em one after another, so the copy rolls into place.
-   Used by the nav, the mark, the way home and the way on, and the home cards. */
+   Used by the mark, the way home, the way on and the home cards. */
 .sr-only {
   position: absolute;
   width: 1px;
@@ -188,13 +189,11 @@ a { color: inherit; text-decoration: none; }
   transition: transform 0.55s var(--ease) calc(var(--i, 0) * 22ms);
 }
 @media (hover: hover) {
-  .nav a:hover .ch-in,
   .mark:hover .ch-in,
   .home-link:hover .ch-in,
   .next:hover .ch-in,
   .card:hover .ch-in { transform: translateY(-2em); }
 }
-.nav a:focus-visible .ch-in,
 .mark:focus-visible .ch-in,
 .home-link:focus-visible .ch-in,
 .next:focus-visible .ch-in,
@@ -384,6 +383,8 @@ a { color: inherit; text-decoration: none; }
 @media (hover: hover) {
   .stack .skill:hover { color: var(--accent); }
 }
+.stack .skill,
+.certs li { cursor: pointer; }
 
 .sub {
   margin-top: 0.5rem;
@@ -476,16 +477,110 @@ a { color: inherit; text-decoration: none; }
 .certs .minor { color: var(--mute); }
 
 /* Certifications and jobs answer the pointer like the skills do. */
-.certs li,
-.job h3,
-.job .side { transition: color 0.35s var(--ease); }
-.node { transition: border-color 0.35s var(--ease); }
+.certs li { transition: color 0.35s var(--ease); }
 @media (hover: hover) {
-  .certs li:hover,
-  .job:hover h3,
-  .job:hover .side { color: var(--accent); }
-  .job:hover .node { border-color: var(--accent); }
+  .certs li:hover { color: var(--accent); }
 }
+
+/* ---------- openable rows: projects and jobs ----------
+   A row opens in place to show what the work was. script.js sweeps the other
+   rows away first; without script the detail simply shows. */
+
+/* A job row answers like a contact row: a blue block from the timeline's edge
+   to the page edge, white letters. Its button covers the whole row. */
+.job::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(-1 * (var(--pad) + var(--left) + var(--gap)));
+  right: calc(var(--pad) * -1);
+  z-index: -1;           /* under the row's text */
+  background: var(--accent);
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  pointer-events: none;
+}
+.job h3,
+.job .sub,
+.job .side { transition: color 0.25s ease; }
+.job-open {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.job-open::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(-1 * (var(--pad) + var(--left) + var(--gap)));
+  right: calc(var(--pad) * -1);
+}
+.job-open:focus-visible { outline: none; }
+.jobs:not(.is-focused) .job:hover::before,
+.jobs:not(.is-focused) .job:has(.job-open:focus-visible)::before { opacity: 1; }
+.jobs:not(.is-focused) .job:hover :is(h3, .sub, .side),
+.jobs:not(.is-focused) .job:has(.job-open:focus-visible) :is(h3, .sub, .side) { color: #ffffff; }
+/* The open job keeps its title in blue. */
+.job.is-open h3 { color: var(--accent); }
+
+/* Projects: the contact rows, as buttons. */
+button.link {
+  width: 100%;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.projects .is-open > .link { color: var(--accent); }
+
+/* The detail: what the work was, then the skills it used, then the way back. */
+.detail {
+  position: relative;
+  overflow: hidden;
+}
+.detail-text {
+  max-width: 38em;
+  padding-top: 1.25rem;
+  color: var(--soft);
+  font-size: var(--text);
+  line-height: 1.6;
+}
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1.25rem;
+}
+.tags li {
+  padding: 0.3em 0.7em;
+  border: 1px solid var(--rule);
+  font-size: var(--small);
+  line-height: 1.3;
+}
+.detail-close {
+  margin: 1.5rem 0 0.5rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--mute);
+  font: inherit;
+  font-size: var(--small);
+  cursor: pointer;
+  transition: color 0.25s ease;
+}
+.detail-close:hover,
+.detail-close:focus-visible { color: var(--accent); }
+.projects .detail { padding: 0 var(--pad) 1rem var(--gap); }
 
 /* ---------- contact ---------- */
 .links { margin: 0 calc(var(--pad) * -1) 0 calc(var(--gap) * -1); }
@@ -859,6 +954,8 @@ a { color: inherit; text-decoration: none; }
   }
 
   .job { display: block; }
+  .job::before,
+  .job-open::after { left: calc(-1 * (var(--pad) + var(--gap))); }
 
   /* A skill longer than the screen ("Lightning Web Components") may wrap. */
   .stack .ln-in,

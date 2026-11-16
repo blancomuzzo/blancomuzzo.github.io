@@ -86,59 +86,90 @@
         <div class="screen exp" data-scene="exp">
           <h2 class="label is-page-title" id="h-exp"><span data-side>Experience</span></h2>
           <div class="body">
-            <ol class="jobs">
-              <li class="job job-now">
+            <!-- Open a job: the rest of the timeline is swept away and its detail opens in place. -->
+            <ol class="jobs" data-focus>
+              <li class="job job-now" data-focus-item>
                 <span class="branch" data-rule aria-hidden="true"></span>
                 <span class="node" data-node aria-hidden="true"></span>
                 <p class="side"><span data-side>2026–now</span></p>
                 <div>
-                  <h3 data-lines>Integrations and communication tools</h3>
+                  <h3><button class="job-open" type="button" data-focus-open aria-expanded="false" aria-controls="job-2026" data-lines>Integrations and communication tools</button></h3>
                   <p class="sub" data-fade>Senior Salesforce Developer</p>
                 </div>
+                <div class="detail" id="job-2026" hidden>
+                  <p class="detail-text">Integrations with external platforms for US enterprise clients, over REST APIs, OAuth and AWS S3. Plus in-house tools that centralize broadcasts and communications inside Salesforce.</p>
+                  <ul class="tags"><li>REST APIs</li><li>OAuth 2.0</li><li>AWS S3</li></ul>
+                  <button class="detail-close" type="button" data-focus-close>← All experience</button>
+                </div>
               </li>
-              <li class="job">
+              <li class="job" data-focus-item>
                 <span class="branch" data-rule aria-hidden="true"></span>
                 <span class="node" data-node aria-hidden="true"></span>
                 <p class="side"><span data-side>2024–2026</span></p>
                 <div>
-                  <h3 data-lines>Greenfield Financial Services Cloud implementation</h3>
+                  <h3><button class="job-open" type="button" data-focus-open aria-expanded="false" aria-controls="job-2024" data-lines>Greenfield Financial Services Cloud implementation</button></h3>
                   <p class="sub" data-fade>Salesforce Developer and Consultant</p>
                 </div>
+                <div class="detail" id="job-2024" hidden>
+                  <p class="detail-text">A Financial Services Cloud org built from the ground up for wealth management: client records, consent and marketing preferences, designed around GDPR and similar data privacy regulations.</p>
+                  <ul class="tags"><li>Financial Services Cloud</li><li>Data modeling</li><li>GDPR</li></ul>
+                  <button class="detail-close" type="button" data-focus-close>← All experience</button>
+                </div>
               </li>
-              <li class="job">
+              <li class="job" data-focus-item>
                 <span class="branch" data-rule aria-hidden="true"></span>
                 <span class="node" data-node aria-hidden="true"></span>
                 <p class="side"><span data-side>2022–2024</span></p>
                 <div>
-                  <h3 data-lines>Insights feed</h3>
+                  <h3><button class="job-open" type="button" data-focus-open aria-expanded="false" aria-controls="job-2022" data-lines>Insights feed</button></h3>
                   <p class="sub" data-fade>Salesforce Developer and Consultant</p>
                 </div>
+                <div class="detail" id="job-2022" hidden>
+                  <p class="detail-text">A custom social-style feed in LWC that surfaced key account insights to asset management associates, backed by Apex services that pulled the relevant data together across the org.</p>
+                  <ul class="tags"><li>Lightning Web Components</li><li>Apex</li></ul>
+                  <button class="detail-close" type="button" data-focus-close>← All experience</button>
+                </div>
               </li>
-              <li class="job">
+              <li class="job" data-focus-item>
                 <span class="branch" data-rule aria-hidden="true"></span>
                 <span class="node" data-node aria-hidden="true"></span>
                 <p class="side"><span data-side>2021–2022</span></p>
                 <div>
-                  <h3 data-lines>KPI portal</h3>
+                  <h3><button class="job-open" type="button" data-focus-open aria-expanded="false" aria-controls="job-2021" data-lines>KPI portal</button></h3>
                   <p class="sub" data-fade>Salesforce Developer and Consultant</p>
                 </div>
+                <div class="detail" id="job-2021" hidden>
+                  <p class="detail-text">An Experience Cloud site built from scratch to deliver KPI dashboards from Tableau CRM, with the access and sharing model to match.</p>
+                  <ul class="tags"><li>Experience Cloud</li><li>Tableau CRM</li><li>Sharing and visibility</li></ul>
+                  <button class="detail-close" type="button" data-focus-close>← All experience</button>
+                </div>
               </li>
-              <li class="job">
+              <li class="job" data-focus-item>
                 <span class="branch" data-rule aria-hidden="true"></span>
                 <span class="node" data-node aria-hidden="true"></span>
                 <p class="side"><span data-side>2020–2021</span></p>
                 <div>
-                  <h3 data-lines>Lightning migration</h3>
+                  <h3><button class="job-open" type="button" data-focus-open aria-expanded="false" aria-controls="job-2020" data-lines>Lightning migration</button></h3>
                   <p class="sub" data-fade>Salesforce Developer</p>
                 </div>
+                <div class="detail" id="job-2020" hidden>
+                  <p class="detail-text">Moved an enterprise solution from Classic to Lightning: data model analysis and redesign, new LWC interfaces and integrations.</p>
+                  <ul class="tags"><li>Lightning Web Components</li><li>Data modeling</li><li>Integrations</li></ul>
+                  <button class="detail-close" type="button" data-focus-close>← All experience</button>
+                </div>
               </li>
-              <li class="job">
+              <li class="job" data-focus-item>
                 <span class="branch" data-rule aria-hidden="true"></span>
                 <span class="node" data-node aria-hidden="true"></span>
                 <p class="side"><span data-side>2019–2020</span></p>
                 <div>
-                  <h3 data-lines>Maintenance and support</h3>
+                  <h3><button class="job-open" type="button" data-focus-open aria-expanded="false" aria-controls="job-2019" data-lines>Maintenance and support</button></h3>
                   <p class="sub" data-fade>Salesforce Developer</p>
+                </div>
+                <div class="detail" id="job-2019" hidden>
+                  <p class="detail-text">Apex, Visualforce and LWC on a large internal enterprise project, with a focus on bug analysis and fixes.</p>
+                  <ul class="tags"><li>Apex</li><li>Visualforce</li><li>Lightning Web Components</li></ul>
+                  <button class="detail-close" type="button" data-focus-close>← All experience</button>
                 </div>
               </li>
             </ol>

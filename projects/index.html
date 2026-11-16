@@ -85,13 +85,34 @@
       <section class="screen" id="projects" aria-labelledby="h-projects">
         <h2 class="label is-page-title" id="h-projects"><span data-side>Projects</span></h2>
         <div class="body">
-          <article class="project" id="p-flex" aria-labelledby="h-flex">
-            <header>
-              <p class="status" data-fade><span class="dot" aria-hidden="true"></span>In progress</p>
-              <h3 class="mega" id="h-flex" data-lines>Flex Queue Dispatcher</h3>
-              <p class="sub" data-fade>Apex, async</p>
-            </header>
-          </article>
+          <!-- Open a project: the others are swept away and its detail opens in place. -->
+          <ul class="links projects" data-focus>
+            <li data-focus-item>
+              <span class="branch" data-rule aria-hidden="true"></span>
+              <button class="link" type="button" data-focus-open aria-expanded="false" aria-controls="p-flex">
+                <span class="link-name" data-lines>Flex Queue Dispatcher</span>
+                <span class="link-handle" data-fade>Apex, async</span>
+              </button>
+              <div class="detail" id="p-flex" hidden>
+                <p class="detail-text">An async job dispatcher that queues work beyond the Apex flex queue limit and feeds it to the platform as slots free up, so batch-heavy orgs stop failing with “too many jobs”.</p>
+                <ul class="tags"><li>Apex</li><li>Async Apex</li></ul>
+                <button class="detail-close" type="button" data-focus-close>← All projects</button>
+              </div>
+            </li>
+            <li data-focus-item>
+              <span class="branch" data-rule aria-hidden="true"></span>
+              <button class="link" type="button" data-focus-open aria-expanded="false" aria-controls="p-relay">
+                <span class="link-name" data-lines>Bulk Email Relay</span>
+                <span class="link-handle" data-fade>Apex, integrations</span>
+              </button>
+              <div class="detail" id="p-relay" hidden>
+                <p class="detail-text">A backend relay that routes Apex-originated email through an external provider, so an org can send at volume past its native email limits. Emails sent from the UI stay native.</p>
+                <ul class="tags"><li>Apex</li><li>REST APIs</li></ul>
+                <button class="detail-close" type="button" data-focus-close>← All projects</button>
+              </div>
+              <span class="branch branch-end" data-rule aria-hidden="true"></span>
+            </li>
+          </ul>
         </div>
       </section>
 
