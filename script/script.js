@@ -226,6 +226,7 @@
     // the scrollbar on touch screens) become the new resting point.
     let queued = false;
     reel.addEventListener("scroll", () => {
+      if (reel.scrollLeft) reel.scrollLeft = 0;   // rows swept to the side never drag the reel along
       if (!raf && Math.abs(reel.scrollTop - own) > 1) target = current = reel.scrollTop;
       if (!queued) { queued = true; requestAnimationFrame(update); }
     }, { passive: true });

@@ -39,13 +39,14 @@
   <!-- Necto Mono by Marco Condello / Collletttivo, SIL OFL (fonts/OFL.txt) -->
   <link rel="preload" href="fonts/necto-mono-regular.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="styles.css">
+  <!-- ?v= forces browsers to fetch the new file after a change: bump it on every release, in all five pages. -->
+  <link rel="stylesheet" href="styles.css?v=8.3">
 
   <!-- Motion: GSAP + ScrollTrigger for the scenes. If they fail to load, the page
        stays fully readable without motion. -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
-  <script src="script/script.js" defer></script>
+  <script src="script/script.js?v=8.3" defer></script>
 </head>
 <body>
   <a class="skip" href="#content">Skip to content</a>

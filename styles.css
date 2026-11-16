@@ -742,6 +742,7 @@ button.link {
   body {
     height: 100%;
     overflow: hidden;
+    overflow: clip;   /* not even focus or script can scroll the page sideways */
   }
   html { scrollbar-gutter: auto; }
 
