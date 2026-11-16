@@ -71,6 +71,7 @@
   const stage = setupStage();
   setupNav();
   if (!motion) return;
+  document.querySelectorAll(".nav a, .mark, .next, .home-link, .card-title").forEach(rollText);
 
   const introDone = playIntro(fontsReady).then(() => root.classList.add("intro-done"));
 
@@ -238,7 +239,12 @@
       const vh = reel.clientHeight;
       stops = geo.map(g => clamp(Math.round(g.top + g.h / 2 - vh / 2), 0, max()));
     };
-    const flatten = () => cards.forEach(c => { c.style.transform = ""; c.style.transformOrigin = ""; });
+    const flatten = () => cards.forEach(c => {
+      c.style.transform = "";
+      c.style.transformOrigin = "";
+      c.style.removeProperty("--k");
+      c.style.removeProperty("--dir");
+    });
     function update() {
       queued = false;
       if (!tilts || !onStage()) { flatten(); return; }
@@ -252,10 +258,20 @@
         const m = Math.min(g.h / 2, vh * 0.3);              // tall cards stay flat longer
         const near = clamp(mid, top + m, top + g.h - m);
         const k = clamp((Math.abs(near - mid) / vh - FLAT) / RAMP, 0, 1);
-        if (!k) { g.c.style.transform = ""; g.c.style.transformOrigin = ""; continue; }
+        if (!k) {
+          g.c.style.transform = "";
+          g.c.style.transformOrigin = "";
+          g.c.style.setProperty("--k", "0");
+          continue;
+        }
         const eased = k * k * (3 - 2 * k);
         g.c.style.transformOrigin = `50% ${(mid - top).toFixed(1)}px`;
         g.c.style.transform = `perspective(${Math.round(g.w * DEPTH)}px) rotateY(${(-TILT * eased).toFixed(2)}deg)`;
+        // --k (0 in the middle, 1 away) and --dir (1 below, -1 above) drive the
+        // title's letters in styles.css: they scatter as a card leaves and
+        // assemble as one arrives.
+        g.c.style.setProperty("--k", eased.toFixed(3));
+        g.c.style.setProperty("--dir", near > mid ? "1" : "-1");
       }
     }
 
@@ -265,6 +281,47 @@
     fontsReady.then(relayout);
 
     return { flatten, update: relayout };
+  }
+
+  // ------------------------------------------------------------------------
+  // Letters that roll on hover
+  // ------------------------------------------------------------------------
+  // Each letter becomes a clipped slot; a copy of it, drawn below by a text
+  // shadow, rolls up into place on hover (styles.css), one letter after
+  // another. Screen readers get the plain text; the letters are hidden from
+  // them. Only the element's own text is split: child elements stay as they are.
+  function rollText(el) {
+    if (el.dataset.roll) return;
+    el.dataset.roll = "1";
+    let i = 0;
+    [...el.childNodes].forEach(node => {
+      if (node.nodeType !== 3 || !node.textContent.trim()) return;
+      const text = node.textContent;
+      const plain = document.createElement("span");
+      plain.className = "sr-only";
+      plain.textContent = text;
+      const shown = document.createElement("span");
+      shown.className = "roll";
+      shown.setAttribute("aria-hidden", "true");
+      text.split(/(\s+)/).forEach(part => {
+        if (!part) return;
+        if (/^\s+$/.test(part)) { shown.append(" "); return; }
+        const word = document.createElement("span");
+        word.className = "roll-word";
+        for (const c of part) {
+          const slot = document.createElement("span");
+          slot.className = "ch";
+          slot.style.setProperty("--i", i++);
+          const letter = document.createElement("span");
+          letter.className = "ch-in";
+          letter.textContent = c;
+          slot.append(letter);
+          word.append(slot);
+        }
+        shown.append(word);
+      });
+      node.replaceWith(plain, shown);
+    });
   }
 
   // ------------------------------------------------------------------------
