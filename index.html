@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-page="home">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -10,10 +10,9 @@
   <meta name="theme-color" content="#fafaf7">
 
   <!-- Runs before first paint:
-       - ?theme=navy|graphite|oxblood|forest previews an alternative palette
-       - arms the motion; on the home page, the first visit of a session also
-         hides the hero for the load sequence
-       Skipped for reduced motion. The timer is a failsafe if the scripts never run. -->
+       - ?theme=navy|graphite|oxblood|forest|black previews an alternative palette
+       - arms the motion (skipped for reduced motion). The timer is a failsafe:
+         if the scripts never start, the page shows everything in place. -->
   <script>
     (function () {
       var root = document.documentElement;
@@ -21,101 +20,217 @@
       if (theme) root.setAttribute("data-theme", theme[1]);
       if (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) return;
       root.classList.add("js-motion");
-      if (root.getAttribute("data-page") === "home") {
-        var seen = false;
-        try { seen = sessionStorage.getItem("intro") === "1"; sessionStorage.setItem("intro", "1"); } catch (e) {}
-        if (!seen) root.classList.add("is-loading");
-      }
       setTimeout(function () {
-        if (root.classList.contains("is-loading")) {
-          root.classList.remove("is-loading");
-          root.classList.add("is-ready");
-        }
         if (!root.classList.contains("motion-on")) root.classList.remove("js-motion");
-      }, 7000);
+      }, 5000);
     })();
   </script>
 
   <!-- Necto Mono by Marco Condello / Collletttivo, SIL OFL (fonts/OFL.txt) -->
   <link rel="preload" href="fonts/necto-mono-regular.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
-  <!-- ?v= forces browsers to fetch the new file after a change: bump it on every release, in all five pages. -->
-  <link rel="stylesheet" href="styles.css?v=8.5">
+  <!-- ?v= forces browsers to fetch the new file after a change: bump it on every release. -->
+  <link rel="stylesheet" href="styles.css?v=9.0">
 
-  <!-- Motion: GSAP + ScrollTrigger for the scenes. If they fail to load, the page
-       stays fully readable without motion. -->
+  <!-- Motion: GSAP + ScrollTrigger. If they fail to load, the page stays fully
+       readable, top to bottom, without motion. -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
-  <script src="script/script.js?v=8.5" defer></script>
+  <script src="script/script.js?v=9.0" defer></script>
 </head>
 <body>
-  <a class="skip" href="#content">Skip to content</a>
 
-  <header class="top">
-    <a class="mark fade" href="./" aria-label="Nicolás Blanco Muzzolon, home">nbm</a>
-    <nav class="nav fade" style="--d: 200" aria-label="Pages">
-      <a href="about/">About</a>
-      <a href="projects/">Projects</a>
-      <a href="experience/">Experience</a>
-      <a href="contact/">Contact</a>
-    </nav>
+  <!-- Scroll is the only input. The bar at the top shows how far down you are,
+       the corner shows which section you are in. Neither is interactive. -->
+  <div class="progress" aria-hidden="true"><span></span></div>
+  <header class="hud is-off" aria-hidden="true">
+    <span class="hud-mark">nbm</span>
+    <span class="hud-where"><span class="hud-num">01</span><span class="hud-name">About</span></span>
   </header>
 
   <main>
 
-    <!-- HERO: on the first visit of a session it plays the load sequence. On
-         desktop it stays put as the left column while the reel on the right
-         moves; on phones it scrolls away. -->
+    <!-- HERO: the name, the role, and a cue to scroll. Nothing else. -->
     <section class="hero" aria-label="Introduction">
-      <span class="axis" aria-hidden="true"></span>
-
-      <p class="role fade" style="--d: 320">Senior Salesforce Developer — Argentina</p>
-
-      <h1 class="name">
-        <span class="row">
-          <span class="line" style="--i: 0"><span class="count" aria-hidden="true">0</span><span class="word">Nicolás</span></span>
-        </span>
-        <span class="row">
-          <span class="line" style="--i: 1"><span class="word">Blanco</span></span>
-          <span class="line" style="--i: 2"><span class="word">Muzzolon</span></span>
-        </span>
-      </h1>
-
-      <p class="ghost ghost-l" aria-hidden="true">blanco</p>
-      <p class="ghost ghost-r" aria-hidden="true">muzzo</p>
+      <div class="hero-inner">
+        <h1 class="hero-name"><span class="mask"><span>Nicolás Blanco Muzzolon</span></span></h1>
+        <p class="hero-role"><span class="mask"><span style="--d: 160">Senior Salesforce Developer — Argentina</span></span></p>
+      </div>
+      <p class="cue" aria-hidden="true"><span class="cue-in"><span class="cue-line"></span>Scroll</span></p>
     </section>
 
-    <!-- On desktop the reel is its own scroller: the cards tilt as they leave the
-         middle and the reel settles on a card when the wheel stops. -->
-    <div class="reel" id="content" data-tilt data-snap>
-    <nav class="cards" aria-label="Sections">
-      <a class="card" href="about/">
-        <span class="card-num" data-fade>01</span>
-        <span class="card-title">About</span>
-        <span class="card-go" aria-hidden="true">→</span>
-      </a>
-      <a class="card" href="projects/">
-        <span class="card-num" data-fade>02</span>
-        <span class="card-title">Projects</span>
-        <span class="card-go" aria-hidden="true">→</span>
-      </a>
-      <a class="card" href="experience/">
-        <span class="card-num" data-fade>03</span>
-        <span class="card-title">Experience</span>
-        <span class="card-go" aria-hidden="true">→</span>
-      </a>
-      <a class="card" href="contact/">
-        <span class="card-num" data-fade>04</span>
-        <span class="card-title">Contact</span>
-        <span class="card-go" aria-hidden="true">→</span>
-      </a>
-    </nav>
+    <!-- Motion markup (read by script/script.js):
+         data-hud    the section's name in the corner while it is on screen
+         data-words  text that lights up word by word with the scroll
+         data-in     a block that rises in
+         data-reveal a label that rises in as it arrives -->
 
-    </div>
+    <!-- ABOUT: pinned; the statement lights up word by word -->
+    <section class="section split statement" id="about" data-hud="01 About" aria-labelledby="h-about">
+      <h2 class="label" id="h-about" data-reveal><span class="n">01</span>About</h2>
+      <p class="statement-text" data-words><span class="js-years">7</span> years building on Salesforce. Apex, Lightning Web Components and the integrations that connect an org to the platforms around it. Eight certifications, Application Architect among them.</p>
+    </section>
 
-    <!-- Fixed to the bottom on desktop, over the content; at the end of the page on phones. -->
-    <footer class="foot">
-      <p class="foot-note">© <span id="year">2026</span> Nicolás Blanco Muzzolon</p>
+    <!-- STACK: each line slides in from alternating sides -->
+    <section class="section split" id="stack" data-hud="01 About" aria-labelledby="h-stack">
+      <h2 class="label label-sticky" id="h-stack" data-reveal>Works with</h2>
+      <ul class="skills">
+        <li><span class="rule"></span><span class="skill"><span class="i">01</span>Apex</span></li>
+        <li><span class="rule"></span><span class="skill"><span class="i">02</span>Lightning Web Components</span></li>
+        <li><span class="rule"></span><span class="skill"><span class="i">03</span>SOQL</span></li>
+        <li><span class="rule"></span><span class="skill"><span class="i">04</span>Async Apex</span></li>
+        <li><span class="rule"></span><span class="skill"><span class="i">05</span>REST APIs</span></li>
+        <li><span class="rule"></span><span class="skill"><span class="i">06</span>SOAP APIs</span></li>
+        <li><span class="rule"></span><span class="skill"><span class="i">07</span>OAuth 2.0</span></li>
+        <li><span class="rule"></span><span class="skill"><span class="i">08</span>Platform Events</span></li>
+        <li><span class="rule"></span><span class="skill"><span class="i">09</span>AWS S3</span></li>
+        <li><span class="rule"></span><span class="skill"><span class="i">10</span>Omni-Channel</span></li>
+        <li><span class="rule"></span><span class="skill"><span class="i">11</span>Data modeling</span></li>
+        <li><span class="rule"></span><span class="skill"><span class="i">12</span>CI/CD</span></li>
+      </ul>
+    </section>
+
+    <!-- CERTIFICATIONS: pinned; the counter climbs as each one lights up -->
+    <section class="section split certs" id="certifications" data-hud="01 About" aria-labelledby="h-certs">
+      <div class="certs-side">
+        <h2 class="label" id="h-certs">Certifications</h2>
+        <p class="counter" aria-hidden="true">8</p>
+      </div>
+      <ul class="cert-list">
+        <li>Application Architect</li>
+        <li>Data Architect</li>
+        <li>Sharing and Visibility</li>
+        <li>Platform Developer</li>
+        <li>Platform App Builder</li>
+        <li>Platform Administrator</li>
+        <li>Financial Services Cloud</li>
+        <li>AI Associate</li>
+      </ul>
+    </section>
+
+    <!-- PROJECTS: on desktop, pinned; scrolling down moves the projects sideways -->
+    <section class="section projects" id="projects" data-hud="02 Projects" aria-labelledby="h-projects">
+      <div class="track">
+        <div class="panel panel-intro split">
+          <p class="label" data-in><span class="n">02</span>Two tools</p>
+          <h2 class="mega" id="h-projects" data-in>Projects</h2>
+        </div>
+        <article class="panel split">
+          <p class="label" data-in>01 / 02</p>
+          <div class="panel-body">
+            <h3 class="panel-name" data-in>Flex Queue Dispatcher</h3>
+            <p class="panel-text" data-in>An async job dispatcher that queues work beyond the Apex flex queue limit and feeds it to the platform as slots free up, so batch-heavy orgs stop failing with “too many jobs”.</p>
+            <ul class="tags" data-in><li>Apex</li><li>Async Apex</li></ul>
+          </div>
+        </article>
+        <article class="panel split">
+          <p class="label" data-in>02 / 02</p>
+          <div class="panel-body">
+            <h3 class="panel-name" data-in>Bulk Email Relay</h3>
+            <p class="panel-text" data-in>A backend relay that routes Apex-originated email through an external provider, so an org can send at volume past its native email limits. Emails sent from the UI stay native.</p>
+            <ul class="tags" data-in><li>Apex</li><li>REST APIs</li></ul>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <!-- EXPERIENCE: the axis fills in blue as you go down; each job lights its node -->
+    <section class="section experience" id="experience" data-hud="03 Experience" aria-labelledby="h-exp">
+      <div class="split head">
+        <h2 class="label" id="h-exp" data-reveal><span class="n">03</span>Experience</h2>
+      </div>
+      <div class="jobs-wrap">
+        <span class="exp-line" aria-hidden="true"><span class="exp-fill"></span></span>
+        <ol class="jobs">
+          <li class="job split">
+            <p class="side" data-in>2026–now</p>
+            <div class="job-body">
+              <span class="node" aria-hidden="true"></span>
+              <h3 data-in>Integrations and communication tools</h3>
+              <p class="role" data-in>Senior Salesforce Developer</p>
+              <p class="job-text" data-in>Integrations with external platforms for US enterprise clients, over REST APIs, OAuth and AWS S3. Plus in-house tools that centralize broadcasts and communications inside Salesforce.</p>
+              <ul class="tags" data-in><li>REST APIs</li><li>OAuth 2.0</li><li>AWS S3</li></ul>
+            </div>
+          </li>
+          <li class="job split">
+            <p class="side" data-in>2024–2026</p>
+            <div class="job-body">
+              <span class="node" aria-hidden="true"></span>
+              <h3 data-in>Greenfield Financial Services Cloud implementation</h3>
+              <p class="role" data-in>Salesforce Developer and Consultant</p>
+              <p class="job-text" data-in>A Financial Services Cloud org built from the ground up for wealth management: client records, consent and marketing preferences, designed around GDPR and similar data privacy regulations.</p>
+              <ul class="tags" data-in><li>Financial Services Cloud</li><li>Data modeling</li><li>GDPR</li></ul>
+            </div>
+          </li>
+          <li class="job split">
+            <p class="side" data-in>2022–2024</p>
+            <div class="job-body">
+              <span class="node" aria-hidden="true"></span>
+              <h3 data-in>Insights feed</h3>
+              <p class="role" data-in>Salesforce Developer and Consultant</p>
+              <p class="job-text" data-in>A custom social-style feed in LWC that surfaced key account insights to asset management associates, backed by Apex services that pulled the relevant data together across the org.</p>
+              <ul class="tags" data-in><li>Lightning Web Components</li><li>Apex</li></ul>
+            </div>
+          </li>
+          <li class="job split">
+            <p class="side" data-in>2021–2022</p>
+            <div class="job-body">
+              <span class="node" aria-hidden="true"></span>
+              <h3 data-in>KPI portal</h3>
+              <p class="role" data-in>Salesforce Developer and Consultant</p>
+              <p class="job-text" data-in>An Experience Cloud site built from scratch to deliver KPI dashboards from Tableau CRM, with the access and sharing model to match.</p>
+              <ul class="tags" data-in><li>Experience Cloud</li><li>Tableau CRM</li><li>Sharing and visibility</li></ul>
+            </div>
+          </li>
+          <li class="job split">
+            <p class="side" data-in>2020–2021</p>
+            <div class="job-body">
+              <span class="node" aria-hidden="true"></span>
+              <h3 data-in>Lightning migration</h3>
+              <p class="role" data-in>Salesforce Developer</p>
+              <p class="job-text" data-in>Moved an enterprise solution from Classic to Lightning: data model analysis and redesign, new LWC interfaces and integrations.</p>
+              <ul class="tags" data-in><li>Lightning Web Components</li><li>Data modeling</li><li>Integrations</li></ul>
+            </div>
+          </li>
+          <li class="job split">
+            <p class="side" data-in>2019–2020</p>
+            <div class="job-body">
+              <span class="node" aria-hidden="true"></span>
+              <h3 data-in>Maintenance and support</h3>
+              <p class="role" data-in>Salesforce Developer</p>
+              <p class="job-text" data-in>Apex, Visualforce and LWC on a large internal enterprise project, with a focus on bug analysis and fixes.</p>
+              <ul class="tags" data-in><li>Apex</li><li>Visualforce</li><li>Lightning Web Components</li></ul>
+            </div>
+          </li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- CONTACT: the end of the page. The links work, but nothing on the way
+         here needs a click. -->
+    <section class="section split contact" id="contact" data-hud="04 Contact" aria-labelledby="h-contact">
+      <h2 class="label" id="h-contact" data-reveal><span class="n">04</span>Contact</h2>
+      <ul class="contact-list">
+        <!-- Email: the address is assembled by script/script.js so it never sits
+             in the HTML for scrapers. Without the script this item stays hidden. -->
+        <li class="js-email" data-u="nblancomuzzolon" data-d="gmail.com" hidden>
+          <a class="c-link"><span class="mask"><span class="c-name">Email</span></span><span class="c-handle"></span></a>
+        </li>
+        <li>
+          <a class="c-link" href="https://www.linkedin.com/in/nicol%C3%A1s-blanco-muzzolon/" target="_blank" rel="noopener"><span class="mask"><span class="c-name">LinkedIn</span></span><span class="c-handle">nicolás-blanco-muzzolon</span></a>
+        </li>
+        <li>
+          <a class="c-link" href="https://github.com/blancomuzzo" target="_blank" rel="noopener"><span class="mask"><span class="c-name">GitHub</span></span><span class="c-handle">blancomuzzo</span></a>
+        </li>
+        <li>
+          <a class="c-link" href="https://www.salesforce.com/trailblazer/nblancomuzzolon" target="_blank" rel="noopener"><span class="mask"><span class="c-name">Trailblazer</span></span><span class="c-handle">nblancomuzzolon</span></a>
+        </li>
+      </ul>
+    </section>
+
+    <footer class="foot split">
+      <p class="label">© <span id="year">2026</span></p>
+      <p>Nicolás Blanco Muzzolon</p>
     </footer>
   </main>
 </body>
